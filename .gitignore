@@ -1,0 +1,3 @@
+# 忽略python的所有缓存文件
+__pycache__
+*.pyc

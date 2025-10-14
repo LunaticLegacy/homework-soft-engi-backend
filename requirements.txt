@@ -1,5 +1,7 @@
 redis==6.4.0
 psycopg2==2.9.11
+asyncpg
 fastapi==0.119.0
+uvicorn
 
 
