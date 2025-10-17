@@ -3,7 +3,7 @@ from psycopg2 import pool
 
 from typing import Any, Optional
 
-class DBManager:
+class DatabaseManager:
     def __init__(
         self,
         db_url: str,
