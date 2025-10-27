@@ -1,0 +1,11 @@
+{
+    "database": {
+        "url": "",
+        "username": "",
+        "password": "",
+        "db_database_name": "",
+        "port": "",
+        "minconn": "",
+        "maxconn": ""
+    }
+}
