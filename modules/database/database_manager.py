@@ -52,7 +52,7 @@ class DatabaseManager:
         """
         print(f"Connection details - Host: {self.db_url}, Port: {self.db_port}, DB: {self.db_database_name}")
         try:
-            self.connection_pool = await asyncpg.create_pool(
+            self.connection_pool = asyncpg.create_pool(
                 user=self.db_username,
                 password=self.db_password,
                 database=self.db_database_name,

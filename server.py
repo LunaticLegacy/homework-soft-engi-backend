@@ -11,6 +11,7 @@ from contextlib import asynccontextmanager
 async def lifespan(app: FastAPI, db_manager: DatabaseManager):
     # 启动前：初始化连接池
     await db_manager.init_pool()
+    print(" -------- Hello server! -------- ")
     try:
         yield
     finally:
@@ -39,6 +40,11 @@ config: Dict = load_config()
 db_man: DatabaseManager = DatabaseManager(**config["database"])
 app = FastAPI(lifespan=lambda app: lifespan(app, db_man))
 
+#
+@app.get("/")
+async def root():
+    return {"message": "Hello, FastAPI is running!"}
+
 # FastAPI路由示例
 @app.get("/users")
 async def read_users(db: DatabaseManager = Depends(get_db)) -> Dict[str, Any]:
@@ -49,6 +55,12 @@ async def read_users(db: DatabaseManager = Depends(get_db)) -> Dict[str, Any]:
             "Code": 200,
             "Message": "Success in search for data.",
             "Result": result,
+        }
+    except ConnectionError:
+        return {
+            "Code": 401,
+            "Message": "Failed in search for data: Database is not initialized.",
+            "Result": None
         }
     except DBTimeoutError:
         return {
@@ -64,7 +76,8 @@ async def read_users(db: DatabaseManager = Depends(get_db)) -> Dict[str, Any]:
         }
 
 def run():
-    import uvicorn    
+    print(" -------- Starting server... -------- ")
+    import uvicorn
     global app
     global db_man
     uvicorn.run(
@@ -73,6 +86,7 @@ def run():
         port=8000, 
         reload=True,
     )
+    print(" -------- Server closed. -------- ")
 
 # 启动 FastAPI
 if __name__ == "__main__":
