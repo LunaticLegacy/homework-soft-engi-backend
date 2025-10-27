@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends
 import json
-from typing import Dict
+import asyncio
+from typing import Dict, Optional, Any
 from modules.database import DatabaseManager
 
 from contextlib import asynccontextmanager
@@ -15,10 +16,6 @@ async def lifespan(app: FastAPI, db_manager: DatabaseManager):
     finally:
         # 关闭时：释放连接池
         await db_manager.close_all_connections()
-
-
-app = FastAPI()
-
 
 # 配置加载
 def load_config(json_config_path: str = "./config.json") -> Dict:
@@ -36,12 +33,41 @@ def get_db_manager(config_path: str = "./config.json") -> DatabaseManager:
 def get_db(db: DatabaseManager = Depends(get_db_manager)):
     return db
 
+
+# ------------- 定义服务器的位置 ------------
+config: Dict = load_config()
+db_man: DatabaseManager = DatabaseManager(**config)
+app = FastAPI(lifespan=lambda app: lifespan(app, db_man))
+
 # FastAPI路由示例
 @app.get("/users")
-async def read_users(db: DatabaseManager = Depends(get_db)):
-    pass
+async def read_users(db: DatabaseManager = Depends(get_db)) -> Dict[str, Any]:
+    try:
+        conn = await db.get_connection(5.0)
+        result: Optional[Dict[str, Any]] = await conn.fetchrow("SELECT * FROM users")
+        return {
+            "Code": 200,
+            "Message": "Success in search for data.",
+            "Result": result,
+        }
+    except TimeoutError:
+        return {
+            "Code": 401,
+            "Message": "Failed in search for data.",
+            "Result": None
+        }
+
+def run():
+    import uvicorn    
+    global app
+    global db_man
+    uvicorn.run(
+        "server:app", 
+        host="0.0.0.0", 
+        port=8000, 
+        reload=True,
+    )
 
 # 启动 FastAPI
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
+    run()
