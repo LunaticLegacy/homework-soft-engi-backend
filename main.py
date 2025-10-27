@@ -1,4 +1,6 @@
-import fastapi
-import psycopg2
+def main():
 
-print(fastapi.__version__)
+    return 0
+
+if __name__ == "__main__":
+    main()

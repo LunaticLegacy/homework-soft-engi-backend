@@ -1,9 +1,15 @@
 import asyncpg
 import asyncio
+from contextlib import asynccontextmanager
 from typing import Optional, Any, Dict
 
 
 class DatabaseManager:
+    """
+    数据库管理器。
+    - 在本管理器内，所有函数均为**异步调用**——为尽可能不阻塞IO。
+    - 异步编程需要使用asyncio库。
+    """
     def __init__(
         self,
         db_url: str,
@@ -74,7 +80,7 @@ class DatabaseManager:
                 "Use init_pool() before get connection."
             )
         return await self.connection_pool.acquire(timeout=timeout)
-
+    
     async def release_connection(self, connection: asyncpg.Connection) -> None:
         """
         释放已获取的连接。
@@ -92,7 +98,23 @@ class DatabaseManager:
         if self.connection_pool is not None:
             await self.connection_pool.close()
             self.connection_pool = None
-
+    
+    @asynccontextmanager
+    async def acquire(self):
+        """
+        连接管理器。
+        - **请在async with上下文中使用，例：**
+        ```
+        db = DatabaseManager()
+        async with db.acquire() as conn:
+            conn.somefunction()
+        ```
+        """
+        conn = await self.get_connection()
+        try:
+            yield conn
+        finally:
+            await self.release_connection(conn)
 
 # 使用示例
 async def main():
@@ -101,15 +123,13 @@ async def main():
         db_username="postgres",
         db_password="lunamoon",
         db_database_name="postgres",
-        db_port=1980,
+        db_port=12345,
         minconn=1,
         maxconn=1
     )
     await db.init_pool()
 
     conn = await db.get_connection()
-    conn1 = await db.get_connection()
-    conn2 = await db.get_connection()
     result: Optional[Dict[str, Any]] = await conn.fetchrow("SELECT now() as current_time")
     print(result)
     await db.release_connection(conn)
