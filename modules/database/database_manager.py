@@ -3,6 +3,10 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import Optional, Any, Dict
 
+class DBTimeoutError(TimeoutError):
+    """自定义数据库超时异常。"""
+    def __init__(self, message: str = "Database operation timed out"):
+        super().__init__(message)
 
 class DatabaseManager:
     """
@@ -74,13 +78,16 @@ class DatabaseManager:
         Returns:
             (asyncpg.Connection): 连接对象
         """
-        if self.connection_pool is None:
-            raise ConnectionError(
-                "Connection pool is not initialized. " \
-                "Use init_pool() before get connection."
-            )
-        return await self.connection_pool.acquire(timeout=timeout)
-    
+        try:
+            if self.connection_pool is None:
+                raise ConnectionError(
+                    "Connection pool is not initialized. " \
+                    "Use init_pool() before get connection."
+                )
+            return await self.connection_pool.acquire(timeout=timeout)
+        except TimeoutError:
+            raise DBTimeoutError(f"Timeout for {timeout} seconds without free connection.")
+
     async def release_connection(self, connection: asyncpg.Connection) -> None:
         """
         释放已获取的连接。

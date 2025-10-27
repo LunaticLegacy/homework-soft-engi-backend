@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends
 import json
 import asyncio
 from typing import Dict, Optional, Any
-from modules.database import DatabaseManager
+from modules.database import DatabaseManager, DBTimeoutError
 
 from contextlib import asynccontextmanager
 
@@ -50,10 +50,16 @@ async def read_users(db: DatabaseManager = Depends(get_db)) -> Dict[str, Any]:
             "Message": "Success in search for data.",
             "Result": result,
         }
-    except TimeoutError:
+    except DBTimeoutError:
         return {
             "Code": 401,
-            "Message": "Failed in search for data.",
+            "Message": "Failed in search for data: Timeout.",
+            "Result": None
+        }
+    except:
+        return {
+            "Code": 401,
+            "Message": "Failed in search for data: Unknown error.",
             "Result": None
         }
 
