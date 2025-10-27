@@ -1,0 +1,9 @@
+{
+  "db_url": "127.0.0.1",
+  "db_username": "test_user",
+  "db_password": "test_pass",
+  "db_database_name": "test_db",
+  "db_port": 5432,
+  "minconn": 1,
+  "maxconn": 2
+}
