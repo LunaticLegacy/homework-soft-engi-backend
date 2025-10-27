@@ -36,7 +36,7 @@ def get_db(db: DatabaseManager = Depends(get_db_manager)):
 
 # ------------- 定义服务器的位置 ------------
 config: Dict = load_config()
-db_man: DatabaseManager = DatabaseManager(**config)
+db_man: DatabaseManager = DatabaseManager(**config["database"])
 app = FastAPI(lifespan=lambda app: lifespan(app, db_man))
 
 # FastAPI路由示例
