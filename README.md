@@ -1,91 +1,110 @@
-## 后端工程
+- 顶层导出： UnifiedDatabaseIO
+- 便捷工厂： create_io
+- 版本号： version_1.0.0
 
-Based on `Python 3.13.5`
+示例用法
 
-### 需求：
+- 安装（对方在库根目录执行）: pip install -e .
+- 导入与初始化:
+  - from db_io_lib import UnifiedDatabaseIO, create_io
+  - io = await create_io(db_config, redis_config, serialization_format="json")
+  - rows = await io.fetch_with_cache("SELECT * FROM users;")
 
-需要导入的库：
-- `redis`：用于管理缓存
-- `asyncpg`：用于管理postgresql数据库，异步
-- `fastapi`：用于构建后端服务器及路由
+函数
+create 创建实例
+fetch_with_cache 读取缓存记录
+fetch_one_with_cache 读取单条缓存记录
+execute_and_invalidate 执行写操作并失效缓存
+transaction 执行事务操作
+close 关闭实例
 
-使用该命令：
-```
-pip install -r ./requirements.txt
-```
-以一键导入所需库。（注意：`开发之前，必须创建虚拟环境`。）
+程序框图
+/************************ create ************************/
+[create(db_config, redis_config, serialization_format)]
+        |
+        v
+[实例化 UnifiedDatabaseIO]
+        |
+        v
+[asyncpg.create_pool]
+        |
+        v
+[aioredis.from_url]
+        |
+        v
+[检查 serialization_format] --json--> [设为 json] --\
+                  \--pickle/默认--> [设为 pickle] ----> [返回实例]
 
-### 开发规范：
+/************************ fetch_with_cache ************************/
+[fetch_with_cache(query, *params, ttl)]
+        |
+        v
+[生成 cache_key]
+        |
+        v
+{Redis 读取} --命中--> [loads(cached_data)] --> [返回]
+        \--未命中/异常--> [DB acquire] -> [conn.fetch] -> [转为字典列表]
+                                    |
+                                    v
+                              {写入 Redis} --成功--> [set(key, data, ex=ttl)]
+                                           \--异常--> [仅打印错误]
+                                    |
+                                    v
+                                  [返回]
 
-请`fork`一份本仓库，并创建一个新的分支，随后签出到创建的分支。
-- 你的所有改动都必须放在这个分支上，并上传到你自己fork后的仓库。
-- 确定代码完工后，请对主仓库发起`pull request`。
-- 本代码采用模块化开发。
-    - 请在`utils`文件夹内为你的模块创建一个文件夹，并在文件夹内写入模块。
+/************************ fetch_one_with_cache ************************/
+[fetch_one_with_cache]
+        |
+        v
+[调用 fetch_with_cache]
+        |
+        v
+{结果列表} --非空--> [返回第一条]
+           \--空--> [返回 None]
 
-### 代码规范：
+/************************ execute_and_invalidate ************************/
+[execute_and_invalidate(command, *params, patterns)]
+        |
+        v
+[DB acquire] -> [conn.execute]
+        |
+        v
+{patterns?} --否--> [返回 status]
+           \--是--> [Redis 客户端] -> [遍历 pattern] -> [scan_iter 收集键]
+                                     |
+                                     v
+                               {有键?} --是--> [delete(*keys)] --> [返回]
+                                        \--否--> [返回]
 
-1. 当一个变量被初次创建时，必须写类型注解。
-```python
-def blablabla() -> None:
-    a: int = 3  # 第一次定义时必须写类型注解
-    a = 4       # 后赋值可以省略
-```
+/************************ transaction ************************/
+[transaction(*operations)]
+        |
+        v
+[DB acquire] -> [开启事务]
+        |
+        v
+[遍历 (command, params)] -> [conn.execute]
+        |
+        v
+{全部成功?} --是--> [提交并返回]
+           \--否(异常)--> [抛出异常(自动回滚)]
 
-2. 函数的输入类型及输出类型必须写类型注解，且函数必须写说明。（我习惯用Google风的参数描述）
-```python
-def func1(a: int, b: float) -> float:
-    """
-    乘法操作。
-    Args:
-        a (int): 第一个数字。
-        b (float): 第二个数字。
-    Returns:
-        (float): 乘积。
-    """
-    return a * b
-```
+/************************ close ************************/
+[close()]
+  |
+  v
+{db_pool?} --是--> [db_pool.close()]
+          \--否--> (跳过)
+  |
+  v
+{redis_pool?} --是--> [redis_pool.close()]
+            \--否--> (跳过)
+  |
+  v
+[完成]
 
-3. 关于库`typing`，如果需要标注元组或列表，或者其他数据类型，可以从内置的`typing`库里引入标注。
-```python
-from typing import List, Tuple, Dict, Any, Optional
-# 这个库还有一堆东西，问deepseek或豆包吧
-```
-例：
-```python
-def get_user_ids() -> List[int]:
-    return [1, 2, 3]
-```
 
-4. 返回多个值时使用`Dict`
-- **禁止返回裸列表或元组。**
-- 如果需要一次传出多个值，请使用`Dict`——严禁使用`List`或`Tuple`。
-```python
-# 错误示例
-def func3() -> List:
-    """
-    错误示例函数。如果直接返回一个List，那么接下来这个List被如何解析就全看调用者如何进行。
-    我曾经搞过一个传入List的结构，当时的元素将近30多个。
-    只要我增加/删除了其中一个元素，那么后来的代码工作量会极为巨大——数组下标必须被全部更改。
-    """
-    return [404, "Not found"]
+注意事项
 
-# 正确示例
-from typing import Any
-
-def correct_func3() -> Dict[str, Any]:
-    """
-    如果未来会有其他位置需要使用该函数，该函数的更改导致的代码更改量就不会再那么大了。
-    因为所有的值都是有一个键所对应的。
-    """
-    return {
-        "code": 404,
-        "message": "Not found"
-    }
-
-```
-
-5. 命名规范：
-- 所有的类名必须为开头大写，例：`DatabaseManager`。
-- 函数名全小写，单词之间用`_`分割。例：`function_in_class`。
-- 如果需要定义类内私有函数，在函数名前加一个`_`。例：`_a_private_function`。
+- db_config 是 asyncpg 连接池参数，示例： {"user": "...", "password": "...", "database": "...", "host": "localhost"}
+- redis_config 需要包含地址字段，示例： {"address": "redis://localhost"}
