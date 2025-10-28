@@ -75,6 +75,25 @@ async def read_users(db: DatabaseManager = Depends(get_db)) -> Dict[str, Any]:
             "Result": None
         }
 
+@app.get("/register")
+async def register(db: DatabaseManager = Depends(get_db)) -> Dict[str, Any]:
+
+    try:
+        conn = await db.get_connection(5.0)
+        result: Optional[Dict[str, Any]] = await conn.fetchrow("SELECT * FROM users")
+        return {
+            "Code": 200,
+            "Message": "Success in search for data.",
+            "Result": result,
+        }
+        
+    except:
+        return {
+            "Code": 401,
+            "Message": "Failed in search for data: Unknown error.",
+            "Result": None
+        }
+
 def run():
     print(" -------- Starting server... -------- ")
     import uvicorn
