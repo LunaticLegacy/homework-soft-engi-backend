@@ -6,6 +6,8 @@ from modules.database import DatabaseManager, DBTimeoutError
 
 from contextlib import asynccontextmanager
 
+# --------------- 定义辅助函数 ------------------
+
 # FastAPI app 实例
 @asynccontextmanager
 async def lifespan(app: FastAPI, db_manager: DatabaseManager):
@@ -24,22 +26,20 @@ def load_config(json_config_path: str = "./config.json") -> Dict:
         config = json.load(f)
     return config
 
-# 数据库管理器实例
+# 数据库管理器实例——只能有1个例。
+config: Dict = load_config()
+db_man: DatabaseManager = DatabaseManager(**config["database"])
+
 def get_db_manager(config_path: str = "./config.json") -> DatabaseManager:
-    config = load_config(config_path)
-    db_config = config.get("database", {})
-    return DatabaseManager(**db_config)
+    global db_man
+    return db_man
 
 # 依赖注入示例
 def get_db(db: DatabaseManager = Depends(get_db_manager)):
     return db
 
-
-# ------------- 定义服务器的位置 ------------
-config: Dict = load_config()
-db_man: DatabaseManager = DatabaseManager(**config["database"])
+# ------------- 定义服务器 ------------
 app = FastAPI(lifespan=lambda app: lifespan(app, db_man))
-
 #
 @app.get("/")
 async def root():
@@ -78,13 +78,15 @@ async def read_users(db: DatabaseManager = Depends(get_db)) -> Dict[str, Any]:
 def run():
     print(" -------- Starting server... -------- ")
     import uvicorn
+
+    global config
     global app
     global db_man
+    
+    server_config: Dict[str, Any] = config.get("server", {})
     uvicorn.run(
         "server:app", 
-        host="0.0.0.0", 
-        port=8000, 
-        reload=True,
+        **config["server"]
     )
     print(" -------- Server closed. -------- ")
 
