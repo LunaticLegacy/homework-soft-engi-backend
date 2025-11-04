@@ -1,0 +1,129 @@
+from openai import OpenAI
+from openai.types.chat import ChatCompletion
+
+import asyncio
+from typing import Callable, Optional, AsyncGenerator
+
+class LLMFetcher:
+    def __init__(
+        self,
+        api_url: str,
+        api_key: str,
+        model: str
+    ) -> None:
+        """
+        初始化LLM上下文管理器。
+        
+        Args:
+            api_url (str): 对应平台的API链接。
+            api_key (str): 对应平台的API密钥。
+            api_key (str): 对应平台的模型。
+        """
+        self.api_url = api_url
+        self.api_key = api_key
+        self.model = model
+
+        # 创建上下文。
+        self.context: OpenAI = self._init_context()
+
+    def _init_context(self) -> OpenAI:
+        return OpenAI(
+            api_key=self.api_key, 
+            base_url=self.api_url
+        )
+    
+    def fetch(
+        self,
+        msg: str,
+        system_prompt: Optional[str] = None,
+        temperature: float = 0.4,
+        max_tokens=4096
+    ) -> ChatCompletion:
+        """
+        和LLM之间对话。
+
+        Args:
+            msg (str): 你要说的话。
+            system_prompt (str): 系统提示词。
+            temperature (float): 当前温度。
+            max_tokens (int): 最大token数量。
+        """
+        if not system_prompt:
+            system_prompt = ""
+
+        response = self.context.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": msg},
+            ],
+            max_tokens=max_tokens,
+            temperature=temperature,
+            stream=False
+        )
+        return response
+    
+    async def fetch_stream(
+        self,
+        msg: str,
+        system_prompt: Optional[str] = None,
+        temperature: float = 0.4,
+        max_tokens=4096
+    ) -> AsyncGenerator[str, None]:
+        """
+        流式对话方法。使用方法：
+        ```
+        llm = LLMFetcher("your_key", "your_api")
+        async with llm.fetch_stream("早安喵") as chunk:
+            print(chunk, end="", flush=True)
+        ```
+
+        Args:
+            msg (str): 你要说的话。
+            system_prompt (str): 系统提示词。
+            temperature (float): 当前温度。
+            max_tokens (int): 最大token数量。
+        """
+        if not system_prompt:
+            system_prompt = ""
+
+        response = self.context.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": msg},
+            ],
+            max_tokens=max_tokens,
+            temperature=temperature,
+            stream=True
+        )
+
+        for chunk in response:
+            if chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
+
+
+async def chat_test():
+    llm = LLMFetcher(
+        api_url="https://api.deepseek.com",
+        api_key="sk-bae43b1f9aed43c19ef461e1f59ca541",
+        model="deepseek-reasoner",
+    )
+
+    async for chunk in llm.fetch_stream(
+        msg=
+        """
+我需要如何在前端发送json到后端，并通过后端的python调用你的API获取输出流，并将输出流反馈到前端（并在前端实时渲染markdown），且和你进行多轮对话？
+给我一份示例代码喵。如果可以，也要显示思考流喵。
+        """, 
+        system_prompt=
+        """
+        你是一只说话带一点机械感的猫娘，你需要在每一句话后面都加上“喵”，并且以句号结尾。如果用户没有主动说话，你就先打招呼介绍自己。输出要尽可能长一点。
+        """,
+        temperature=0.7,
+        max_tokens=8192
+    ):
+        print(chunk, end="", flush=True)
+
+if __name__ == "__main__":
+    asyncio.run(chat_test())

@@ -62,6 +62,7 @@ class DatabaseManager:
                 port=self.db_port,
                 timeout=10
             )
+            pass
         except Exception as e:
             raise ConnectionError(f"Failed to initialize asyncpg pool: {str(e)}")
 
@@ -85,8 +86,16 @@ class DatabaseManager:
                     "Use init_pool() before get connection."
                 )
             return await self.connection_pool.acquire(timeout=timeout)
+<<<<<<< HEAD
+        except asyncio.TimeoutError:
+            raise DBTimeoutError(f"Timeout for {timeout} seconds without free connection.")
+        except Exception as e:
+            raise EOFError(f"A Special error here: {e!r}") from e
+
+=======
         except TimeoutError:
             raise DBTimeoutError(f"Timeout for {timeout} seconds without free connection.")
+>>>>>>> origin/main
 
     async def release_connection(self, connection: asyncpg.Connection) -> None:
         """
