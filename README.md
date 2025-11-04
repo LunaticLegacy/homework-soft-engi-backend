@@ -59,7 +59,7 @@ def get_user_ids() -> List[int]:
 
 4. 返回多个值时使用`Dict`
 - **禁止返回裸列表或元组。**
-- 如果需要一次传出多个值，请使用`Dict`——严禁使用`List`或`Tuple`。
+- 如果需要一次传出多个不同意义值，请使用`Dict`——严禁使用`List`或`Tuple`。
 ```python
 # 错误示例
 def func3() -> List:
