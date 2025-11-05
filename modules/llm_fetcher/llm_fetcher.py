@@ -17,7 +17,7 @@ class LLMFetcher:
         Args:
             api_url (str): 对应平台的API链接。
             api_key (str): 对应平台的API密钥。
-            api_key (str): 对应平台的模型。
+            model (str): 对应平台的模型。
         """
         self.api_url = api_url
         self.api_key = api_key
@@ -37,7 +37,7 @@ class LLMFetcher:
         msg: str,
         system_prompt: Optional[str] = None,
         temperature: float = 0.4,
-        max_tokens=4096
+        max_tokens: int = 4096
     ) -> ChatCompletion:
         """
         和LLM之间对话。
@@ -68,7 +68,7 @@ class LLMFetcher:
         msg: str,
         system_prompt: Optional[str] = None,
         temperature: float = 0.4,
-        max_tokens=4096
+        max_tokens: int = 4096
     ) -> AsyncGenerator[str, None]:
         """
         流式对话方法。使用方法：
@@ -95,18 +95,32 @@ class LLMFetcher:
             ],
             max_tokens=max_tokens,
             temperature=temperature,
-            stream=True
+            stream=True,
+            stream_options={}
         )
+        in_thinking: bool = False
 
         for chunk in response:
+            delta = chunk.choices[0].delta
+            if hasattr(delta, "reasoning_content"):
+                if not in_thinking:
+                    yield f"\n\n {'-'*30} 思考中 {'-'*30} \n\n"
+                    in_thinking = True
+                # 这俩东西都是可用的
+                if chunk.choices[0].delta.reasoning_content:            # type: ignore
+                    yield chunk.choices[0].delta.reasoning_content      # type: ignore
+
             if chunk.choices[0].delta.content:
+                if in_thinking:
+                    yield f"\n\n {'-'*30} 思考结束 {'-'*30} \n\n"
+                    in_thinking = False
                 yield chunk.choices[0].delta.content
 
 
 async def chat_test():
     llm = LLMFetcher(
         api_url="https://api.deepseek.com",
-        api_key="sk-bae43b1f9aed43c19ef461e1f59ca541",
+        api_key="sk-9a190d5d23604684a75fb8b522733f44",
         model="deepseek-reasoner",
     )
 
@@ -126,4 +140,8 @@ async def chat_test():
         print(chunk, end="", flush=True)
 
 if __name__ == "__main__":
-    asyncio.run(chat_test())
+    try:
+        asyncio.run(chat_test())
+    except KeyboardInterrupt:
+        print("== 退出程序：检测到Ctrl+C ==")
+        quit(1)

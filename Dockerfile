@@ -1,10 +1,10 @@
-FROM postgres:13
+FROM postgres:15
 
 # 设置环境变量
 ENV POSTGRES_DB=postgres
 ENV POSTGRES_USER=postgres
 ENV POSTGRES_PASSWORD=lunamoon
-ENV POSTGRES_PORT=5432
+ENV POSTGRES_PORT=1980
 
 # 复制所有SQL文件到docker-entrypoint-initdb.d目录下
 # 按数字顺序命名以确保正确的执行顺序
@@ -24,8 +24,4 @@ COPY ./sql/13_integrations_payments.sql /docker-entrypoint-initdb.d/13_integrati
 COPY ./sql/14_audit_system.sql /docker-entrypoint-initdb.d/14_audit_system.sql
 COPY ./sql/15_search_triggers.sql /docker-entrypoint-initdb.d/15_search_triggers.sql
 
-# 暴露PostgreSQL默认端口
-EXPOSE 5432
-
-# 使用官方postgres镜像的默认启动命令
 CMD ["postgres"]

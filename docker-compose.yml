@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+  database:
+    build:
+      context: .
+      dockerfile: dockerfile
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: lunamoon
+      POSTGRES_PORT: 5432
+    ports:
+      - "1980:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - database
+    environment:
+      - DATABASE_HOST=database
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=postgres
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=lunamoon
+    volumes:
+      - .:/app
+
+volumes:
+  postgres_data:
