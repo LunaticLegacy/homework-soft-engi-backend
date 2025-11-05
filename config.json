@@ -11,7 +11,12 @@
     "server": {
         "host": "127.0.0.1",
         "port": 8000,
-        "reload": true,
+        "reload": false,
         "workers": 1
+    },
+    "llm": {
+        "api_url": "https://api.deepseek.com",
+        "api_key": "sk-9a190d5d23604684a75fb8b522733f44",
+        "model": "deepseek-reasoner"
     }
 }

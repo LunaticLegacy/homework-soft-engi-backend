@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Dict, Any
 
 def load_config(json_config_path: str = "./config.json") -> Dict[str, Any]:
@@ -19,17 +20,22 @@ def load_config(json_config_path: str = "./config.json") -> Dict[str, Any]:
         # 如果没有找到配置文件，返回默认配置
         return {
             "database": {
-                "db_url": "127.0.0.1",
-                "db_username": "postgres",
-                "db_password": "lunamoon",
-                "db_database_name": "postgres",
-                "db_port": 5432,
+                "db_url": os.environ.get("DATABASE_HOST", "127.0.0.1"),
+                "db_username": os.environ.get("DATABASE_USER", "postgres"),
+                "db_password": os.environ.get("DATABASE_PASSWORD", "lunamoon"),
+                "db_database_name": os.environ.get("DATABASE_NAME", "postgres"),
+                "db_port": int(os.environ.get("DATABASE_PORT", 5432)),
                 "minconn": 1,
                 "maxconn": 20
             },
             "server": {
-                "host": "127.0.0.1",
+                "host": "0.0.0.0",
                 "port": 8000,
-                "reload": True
+                "reload": False
+            },
+            "llm": {
+                "api_url": "https://api.deepseek.com",
+                "api_key": "key",
+                "model": "deepseek-reasoner"
             }
         }

@@ -5,3 +5,7 @@ __pycache__
 .dist
 
 config.json
+
+# 一些不应该存在的东西
+小组信息.md
+

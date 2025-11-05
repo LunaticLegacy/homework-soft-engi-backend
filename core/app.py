@@ -14,7 +14,6 @@ async def lifespan(app: FastAPI):
     """
     # 启动前：初始化连接池
     await db_manager.init_pool()
-    print(" -------- Hello server! -------- ")
     try:
         yield
     finally:
@@ -43,12 +42,14 @@ def create_app() -> FastAPI:
     app.middleware("http")(error_handler)
     
     # 导入并注册路由
-    from main_routes import router as main_router
+    from routes.main_routes import router as main_router
     from routes.user_routes import router as user_router
+    from routes.ai_routes import router as ai_router
     from api.v1.routes import router as api_v1_router
     
     app.include_router(main_router)
     app.include_router(user_router)
+    app.include_router(ai_router)
     app.include_router(api_v1_router)
     
     return app
