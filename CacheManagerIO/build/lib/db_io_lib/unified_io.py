@@ -60,8 +60,10 @@ class UnifiedDatabaseIO:  # 统一的数据库与缓存 I/O 封装类
             print(f"Redis cache read error: {e}")  # 打印 Redis 读取错误信息
 
         async with self.db_pool.acquire() as conn:  # 若无缓存则访问数据库
-            records = await conn.fetch(query, *params)  # 执行查询语句并获取记录
-            result = [dict(record) for record in records]  # 将 Record 转换为字典列表
+            async with conn.cursor() as cur:  # 获取游标
+                await cur.execute(query, *params)  # 执行查询语句
+                records = await cur.fetchall()  # 获取所有记录
+                result = [dict(zip([desc[0] for desc in cur.description], record)) for record in records]  # 将记录转换为字典列表
 
         try:  # 将查询结果写入 Redis 缓存
             async with self.redis_pool.client() as redis:  # 获取 Redis 客户端上下文
@@ -88,7 +90,9 @@ class UnifiedDatabaseIO:  # 统一的数据库与缓存 I/O 封装类
         invalidate_patterns: List[str] = None,  # 需要失效的缓存键模式列表
     ) -> str:  # 返回数据库执行状态字符串
         async with self.db_pool.acquire() as conn:  # 获取数据库连接
-            status = await conn.execute(command, *params)  # 执行写操作并获取状态
+            async with conn.cursor() as cur:  # 获取游标
+                await cur.execute(command, *params)  # 执行写操作并获取状态
+                status = cur.statusmessage
 
         if invalidate_patterns:  # 如果提供了缓存失效模式
             try:  # 扫描匹配的键并删除
@@ -104,6 +108,12 @@ class UnifiedDatabaseIO:  # 统一的数据库与缓存 I/O 封装类
 
     async def transaction(self, *operations: Tuple[str, Tuple]):  # 在单个事务中执行多条写入语句
         async with self.db_pool.acquire() as conn:  # 获取数据库连接
-            async with conn.transaction():  # 开启事务上下文
-                for command, params in operations:  # 逐条执行传入的 SQL 命令与参数
-                    await conn.execute(command, *params)  # 执行写操作
+            async with conn.cursor() as cur:  # 获取游标
+                await cur.execute("BEGIN")  # 开启事务
+                try:
+                    for command, params in operations:  # 逐条执行传入的 SQL 命令与参数
+                        await cur.execute(command, *params)  # 执行写操作
+                    await cur.execute("COMMIT")  # 提交事务
+                except Exception as e:
+                    await cur.execute("ROLLBACK")  # 回滚事务
+                    raise
