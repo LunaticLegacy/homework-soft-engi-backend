@@ -3,3 +3,4 @@ asyncpg==0.30.0
 fastapi==0.119.0
 uvicorn
 
+openai

@@ -1,5 +1,5 @@
-from .database_manager import DatabaseManager
+from .database_manager import (DatabaseManager, DBTimeoutError)
 
 __all__ = [
-    "DatabaseManager"
+    "DatabaseManager", "DBTimeoutError"
 ]

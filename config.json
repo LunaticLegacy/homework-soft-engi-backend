@@ -1,11 +1,22 @@
 {
     "database": {
-        "url": "",
-        "username": "",
-        "password": "",
-        "db_database_name": "",
-        "port": "",
-        "minconn": "",
-        "maxconn": ""
+        "db_url": "127.0.0.1",
+        "db_username": "postgres",
+        "db_password": "lunamoon",
+        "db_database_name": "postgres",
+        "db_port": 5432,
+        "minconn": 1,
+        "maxconn": 20
+    },
+    "server": {
+        "host": "127.0.0.1",
+        "port": 8000,
+        "reload": false,
+        "workers": 1
+    },
+    "llm": {
+        "api_url": "https://api.deepseek.com",
+        "api_key": "sk-9a190d5d23604684a75fb8b522733f44",
+        "model": "deepseek-reasoner"
     }
 }

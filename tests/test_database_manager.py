@@ -21,7 +21,7 @@ class DummyPool:
     def __init__(self):
         self._acquired = False
 
-    async def acquire(self, timeout: float = None):
+    async def acquire(self, timeout: float = 5.0):
         self._acquired = True
         return DummyConnection()
 
@@ -41,7 +41,7 @@ async def test_init_pool_and_connection_flow(monkeypatch):
 
     created = {}
 
-    async def fake_create_pool(**kwargs):
+    def fake_create_pool(*args, **kwargs):
         # record that create_pool was called with expected keys
         created.update(kwargs)
         return DummyPool()
@@ -61,7 +61,12 @@ async def test_init_pool_and_connection_flow(monkeypatch):
     # init pool should call our fake_create_pool
     await db.init_pool()
     assert db.connection_pool is not None
+    # Check if create_pool was called with correct parameters
     assert 'user' in created and created['user'] == cfg['db_username']
+    assert 'password' in created and created['password'] == cfg['db_password']
+    assert 'database' in created and created['database'] == cfg['db_database_name']
+    assert 'host' in created and created['host'] == cfg['db_url']
+    assert 'port' in created and created['port'] == cfg['db_port']
 
     # get connection
     conn = await db.get_connection()
@@ -84,7 +89,7 @@ async def test_init_pool_failure(monkeypatch):
     with open(cfg_path, 'r', encoding='utf-8') as f:
         cfg = json.load(f)
 
-    async def fake_create_pool_error(**kwargs):
+    def fake_create_pool_error(*args, **kwargs):
         raise Exception('unable to reach host')
 
     monkeypatch.setattr('asyncpg.create_pool', fake_create_pool_error)
@@ -99,12 +104,20 @@ async def test_init_pool_failure(monkeypatch):
         maxconn=cfg.get('maxconn', 1),
     )
 
+    # This should raise a ConnectionError
     with pytest.raises(ConnectionError):
         await db.init_pool()
 
 
+# Test for get_connection without init
 @pytest.mark.asyncio
 async def test_get_connection_without_init():
-    db = DatabaseManager('h', 'u', 'p', 'd', 1)
+    db = DatabaseManager(
+        db_url="127.0.0.1",
+        db_username="test",
+        db_password="test",
+        db_database_name="test",
+        db_port=5432
+    )
     with pytest.raises(ConnectionError):
         await db.get_connection()

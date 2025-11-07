@@ -59,7 +59,7 @@ def get_user_ids() -> List[int]:
 
 4. 返回多个值时使用`Dict`
 - **禁止返回裸列表或元组。**
-- 如果需要一次传出多个值，请使用`Dict`——严禁使用`List`或`Tuple`。
+- 如果需要一次传出多个不同意义值，请使用`Dict`——严禁使用`List`或`Tuple`。
 ```python
 # 错误示例
 def func3() -> List:
@@ -89,3 +89,35 @@ def correct_func3() -> Dict[str, Any]:
 - 所有的类名必须为开头大写，例：`DatabaseManager`。
 - 函数名全小写，单词之间用`_`分割。例：`function_in_class`。
 - 如果需要定义类内私有函数，在函数名前加一个`_`。例：`_a_private_function`。
+
+### AI集成说明：
+
+本系统集成了基于大语言模型（LLM）的AI功能，包括任务分解、任务建议和AI对话。
+
+1. 配置：
+   - 在`config.json`中配置LLM相关参数
+   - 需要设置正确的API URL、API密钥和模型名称
+
+2. 主要功能：
+   - 任务分解：将大目标自动分解为可执行的子任务
+   - 任务建议：为特定任务提供完成建议和技巧
+   - AI对话：与AI进行自然语言对话
+
+3. 相关模块：
+   - `modules/llm_fetcher/`：LLM获取器模块
+   - `services/ai_task_service.py`：AI任务服务
+   - `routes/ai_routes.py`：AI相关API路由
+
+### 测试规范：
+
+1. 测试目的
+
+如何写测试用例？
+- 需要使用包体`pytest`。
+    - 使用命令`python -m pytest`以进行测试。（如果没有这个，自行解决，装个python吧）
+- 测试用例必须写在文件夹`tests`里，且文件前缀必须是`test`。
+    - 例：`test_database_manager.py`，`test_1145141919810.py`，...
+- ~~如果实在不行将代码扔给通义灵码，将其切换到“智能体”模式，提出要求就可以。~~
+
+
+ 
