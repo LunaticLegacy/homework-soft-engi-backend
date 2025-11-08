@@ -103,11 +103,11 @@ class LLMFetcher:
         for chunk in response:
             delta = chunk.choices[0].delta
             if hasattr(delta, "reasoning_content"):
-                if not in_thinking:
-                    yield f"\n\n {'-'*30} 思考中 {'-'*30} \n\n"
-                    in_thinking = True
                 # 这俩东西都是可用的
                 if chunk.choices[0].delta.reasoning_content:            # type: ignore
+                    if not in_thinking:
+                        yield f"\n\n {'-'*30} 思考中 {'-'*30} \n\n"
+                        in_thinking = True
                     yield chunk.choices[0].delta.reasoning_content      # type: ignore
 
             if chunk.choices[0].delta.content:

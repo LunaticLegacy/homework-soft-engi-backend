@@ -6,14 +6,14 @@ AI功能演示脚本
 展示如何使用AI任务分解功能
 """
 
-import asyncio
+
 import sys
 import os
-
-from typing import Dict, Any
-
 # 添加项目根目录到Python路径
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+import asyncio
+from typing import Dict, Any
 
 from core.config import load_config
 from modules.llm_fetcher.llm_fetcher import LLMFetcher
@@ -124,7 +124,7 @@ def main():
     print("AI功能演示\n")
     
     # 运行演示
-    asyncio.run(demo_ai_task())
+    asyncio.run(demo_ai_chat())
     
     print("\n=== 演示结束 ===")
 
