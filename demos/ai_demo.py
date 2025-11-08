@@ -18,7 +18,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from core.config import load_config
 from modules.llm_fetcher.llm_fetcher import LLMFetcher
 from services.ai_task_service import AITaskService
-from modules.database.database_manager import DatabaseManager
+from modules.databaseman.database_manager import DatabaseManager
 
 
 async def demo_ai_task():

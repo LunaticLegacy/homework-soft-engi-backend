@@ -3,7 +3,7 @@ import json
 import os
 import pytest
 
-from modules.database.database_manager import DatabaseManager
+from modules.databaseman.database_manager import DatabaseManager
 
 
 TEST_DIR = os.path.join(os.path.dirname(__file__), "configs")

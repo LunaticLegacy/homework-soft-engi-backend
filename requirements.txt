@@ -1,6 +1,7 @@
-redis==6.4.0
-asyncpg==0.30.0
-fastapi==0.119.0
-uvicorn
-
-openai
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+asyncpg==0.29.0
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.0
+python-multipart==0.0.6

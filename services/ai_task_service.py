@@ -1,6 +1,6 @@
 from typing import Dict, List, Any, Optional
 from modules.llm_fetcher.llm_fetcher import LLMFetcher
-from modules.database import DatabaseManager, DBTimeoutError
+from modules.databaseman import DatabaseManager, DBTimeoutError
 from core.exceptions import DatabaseConnectionError, DatabaseTimeoutError
 import json
 import uuid

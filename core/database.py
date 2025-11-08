@@ -1,4 +1,4 @@
-from modules.database import DatabaseManager
+from modules.databaseman import DatabaseManager
 from core.config import load_config
 from typing import Dict
 
@@ -13,5 +13,4 @@ def get_db_manager() -> DatabaseManager:
     Returns:
         DatabaseManager: 数据库管理器实例
     """
-    global db_manager
     return db_manager

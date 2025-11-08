@@ -1,5 +1,5 @@
 from typing import Dict, List, Optional, Any
-from modules.database import DatabaseManager, DBTimeoutError
+from modules.databaseman import DatabaseManager, DBTimeoutError
 from core.exceptions import DatabaseConnectionError, DatabaseTimeoutError, ResourceNotFoundError
 
 class UserService:
@@ -113,3 +113,4 @@ class UserService:
             raise DatabaseTimeoutError(f"Database operation timed out: {str(e)}")
         except Exception as e:
             raise DatabaseConnectionError(f"Unexpected error: {str(e)}")
+        

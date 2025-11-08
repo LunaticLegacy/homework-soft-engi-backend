@@ -1,9 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Form
 from typing import Dict, Optional, Any, List
-from modules.database import DatabaseManager
+from modules.databaseman import DatabaseManager
 from core.database import get_db_manager
 from services.user_service import UserService
 from core.exceptions import DatabaseConnectionError, DatabaseTimeoutError, ResourceNotFoundError
+
+from pydantic import BaseModel
+
+class UserRegisterRequest(BaseModel):
+    email: str
+    full_name: str
+    password: str
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -75,11 +82,10 @@ async def read_user(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# TODO：将表单更改为用JSON。
 @router.post("/register", response_model=Dict[str, Any])
 async def register_user(
-    email: str,
-    full_name: str,
-    password: str,
+    request: UserRegisterRequest,  # 使用模型接收JSON
     service: UserService = Depends(get_user_service)
 ) -> Dict[str, Any]:
     """
@@ -106,7 +112,11 @@ async def register_user(
             "message": "User created successfully"
         }
     except DatabaseConnectionError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        return {
+            "success": False,
+            "error": "HTTP Error",
+            "message": str(e)
+        }
     except DatabaseTimeoutError as e:
         raise HTTPException(status_code=408, detail=str(e))
     except Exception as e:

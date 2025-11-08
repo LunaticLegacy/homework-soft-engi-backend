@@ -3,8 +3,8 @@ from setuptools import setup, find_packages
 setup(
     name="db_io_lib",
     version="0.1.0",
-    author="Klima",
-    author_email="1161863146@qq.com",
+    author="Klima, LunaticLegacy",
+    author_email="1161863146@qq.com, lunaticlegacy@163.com",
     description="A unified library for asynchronous database and cache I/O operations.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",

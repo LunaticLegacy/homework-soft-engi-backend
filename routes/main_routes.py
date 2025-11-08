@@ -20,4 +20,4 @@ async def health_check():
     Returns:
         dict: 表示服务健康的响应
     """
-    return {"status": "healthy", "message": "Service is running"}
+    return {"status": "healthy", "message": "Service is running."}
