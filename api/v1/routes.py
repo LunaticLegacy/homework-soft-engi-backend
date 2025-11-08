@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from typing import Dict, List
-from modules.database import DatabaseManager
+from modules.databaseman import DatabaseManager
 from core.database import get_db_manager
 
 router = APIRouter(prefix="/api/v1", tags=["api-v1"])

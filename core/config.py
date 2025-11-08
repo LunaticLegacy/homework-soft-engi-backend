@@ -28,6 +28,12 @@ def load_config(json_config_path: str = "./config.json") -> Dict[str, Any]:
                 "minconn": 1,
                 "maxconn": 20
             },
+            "redis": {
+                "host": "localhost",
+                "port": 6379,
+                "db": 0,
+                "password": None
+            },
             "server": {
                 "host": "0.0.0.0",
                 "port": 8000,
