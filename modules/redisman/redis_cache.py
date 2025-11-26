@@ -53,7 +53,8 @@ class RedisManager:
                 url = f"redis://:{self.password}@{self.host}:{self.port}/{self.db}"
             else:
                 url = f"redis://{self.host}:{self.port}/{self.db}"
-            
+            print(f"Connection details - {url}")
+
             # 创建连接池
             self.redis_pool = ario.ConnectionPool.from_url(
                 url,

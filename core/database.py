@@ -1,10 +1,10 @@
 from modules.databaseman import DatabaseManager
-from core.config import load_config
-from typing import Dict
+from core.config import get_settings
 
-# 全局配置和数据库管理器实例
-config: Dict = load_config()
-db_manager: DatabaseManager = DatabaseManager(**config["database"])
+
+settings = get_settings()
+db_manager: DatabaseManager = DatabaseManager(**settings.database.__dict__)
+
 
 def get_db_manager() -> DatabaseManager:
     """

@@ -1,9 +1,15 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
+
+
+class SimpleRequest(BaseModel):
+    time: str | None = None
+    token: str | None = None
 
 router = APIRouter()
 
-@router.get("/", tags=["main"])
-async def root():
+@router.post("/", tags=["main"])
+async def root(_: SimpleRequest | None = None):
     """
     根路径，返回欢迎信息
     
@@ -12,8 +18,8 @@ async def root():
     """
     return {"message": "Hello, FastAPI is running!"}
 
-@router.get("/health", tags=["main"])
-async def health_check():
+@router.post("/health", tags=["main"])
+async def health_check(_: SimpleRequest | None = None):
     """
     健康检查端点
     

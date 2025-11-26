@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from typing import Dict, List
 from modules.databaseman import DatabaseManager
 from core.database import get_db_manager
+from api.v1.management_routes import router as management_router
 
 router = APIRouter(prefix="/api/v1", tags=["api-v1"])
 
@@ -44,3 +45,6 @@ async def list_users(db: DatabaseManager = Depends(get_db_manager)) -> Dict:
             "success": False,
             "error": str(e)
         }
+
+
+router.include_router(management_router)

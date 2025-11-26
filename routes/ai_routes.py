@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from typing import Dict, Optional, Any
 from modules.databaseman import DatabaseManager
 from core.database import get_db_manager
@@ -139,5 +140,44 @@ async def chat_with_ai(
             },
             "message": "对话成功"
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/chat-stream")
+async def chat_with_ai_stream(
+    message: str,
+    user_id: str,
+    system_prompt: Optional[str] = None,
+    llm_fetcher: LLMFetcher = Depends(get_llm_fetcher)
+):
+    """
+    与AI进行流式对话
+    
+    Args:
+        message (str): 用户消息
+        user_id (str): 用户ID
+        system_prompt (Optional[str]): 系统提示词
+        llm_fetcher (LLMFetcher): LLM获取器实例
+        
+    Returns:
+        StreamingResponse: 流式响应
+    """
+    try:
+        # 默认系统提示词
+        if not system_prompt:
+            system_prompt = "你是一个专业的任务管理助手，帮助用户更好地规划和完成任务。"
+        
+        # 调用LLM流式方法
+        async def generate():
+            async for chunk in llm_fetcher.fetch_stream(
+                msg=message,
+                system_prompt=system_prompt,
+                temperature=0.7,
+                max_tokens=2048
+            ):
+                yield chunk
+        
+        # 返回一个处理流式内容的handler。
+        return StreamingResponse(generate(), media_type="text/plain")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
