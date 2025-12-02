@@ -13,13 +13,12 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import asyncio
-from typing import Dict, Any
+from typing import Dict, Any, List, Tuple
 
-from core.config import load_config
+from core.config import load_config, get_settings
 from modules.llm_fetcher.llm_fetcher import LLMFetcher
 from services.ai_task_service import AITaskService
 from modules.databaseman.database_manager import DatabaseManager
-
 
 async def demo_ai_task():
     """演示AI任务规划功能"""
@@ -38,6 +37,8 @@ async def demo_ai_task():
         workspace_id=None
     )
 
+    # 添加上下文存储
+    context_history: List[Tuple[str, str]] = []  # 存储 (role, content) 的元组
     running: bool = True
 
     while running:
@@ -46,12 +47,16 @@ async def demo_ai_task():
             # 模拟用户问题
             user_question: str = input("请输入问题：\n>> ")
             
+            # 将用户问题添加到上下文
+            context_history.append(("user", user_question))
+            
             print("正在获取AI建议...")
             
             # 构造系统提示词
-            system_prompt: str = "你是一个资深的软件架构师，专门负责设计高并发的电商网站系统。"
+            system_prompt: str = get_settings().prompts.task_suggestion
             
-            # 调用LLM，并显示结果。
+            # 调用LLM，并显示结果
+            full_response = ""
             async for chunk in llm_fetcher.fetch_stream(
                 msg=user_question,
                 system_prompt=system_prompt,
@@ -59,12 +64,14 @@ async def demo_ai_task():
                 max_tokens=8192
             ):
                 print(chunk, end="", flush=True)
+                full_response += chunk
             
-            print("演示完成！")
-            print("\n实际使用时，此功能将：")
-            print("1. 接收用户问题")
-            print("2. 调用LLM获取专业建议")
-            print("3. 返回AI的回答")
+            # 将AI响应添加到上下文
+            context_history.append(("assistant", full_response))
+            
+            # 显示上下文历史（可选）
+            print(f"\n\n当前上下文历史包含 {len(context_history)} 条消息")
+            
 
         except KeyboardInterrupt:
             print("== 用户主动退出 ==")
@@ -82,6 +89,8 @@ async def demo_ai_chat():
     config: Dict[str, Any] = load_config()["llm"]
 
     llm_fetcher = LLMFetcher(**config)
+    # 添加上下文存储
+    context_history: List[Tuple[str, str]] = []  # 存储 (role, content) 的元组
     running: bool = True
 
     while running:
@@ -90,12 +99,16 @@ async def demo_ai_chat():
             # 模拟用户问题
             user_question: str = input("请输入问题：\n>> ")
             
+            # 将用户问题添加到上下文
+            context_history.append(("user", user_question))
+            
             print("正在获取AI建议...")
             
             # 构造系统提示词
-            system_prompt: str = "你是一个资深的软件架构师，专门负责设计高并发的电商网站系统。"
+            system_prompt: str = get_settings().prompts.task_decompose
             
-            # 调用LLM，并显示结果。
+            # 调用LLM，并显示结果
+            full_response = ""
             async for chunk in llm_fetcher.fetch_stream(
                 msg=user_question,
                 system_prompt=system_prompt,
@@ -103,6 +116,13 @@ async def demo_ai_chat():
                 max_tokens=8192
             ):
                 print(chunk, end="", flush=True)
+                full_response += chunk
+            
+            # 将AI响应添加到上下文
+            context_history.append(("assistant", full_response))
+            
+            # 显示上下文历史（可选）
+            print(f"\n\n当前上下文历史包含 {len(context_history)} 条消息")
             
             print("演示完成！")
             print("\n实际使用时，此功能将：")

@@ -87,7 +87,7 @@ settings = AppSettings(
     ),
     llm=LLMSettings(
         api_url="https://api.deepseek.com",
-        api_key="key",
+        api_key="sk-e8b4315f80e24843825ca39cd880e214",
         model="deepseek-reasoner",
     ),
     prompts=PromptsSettings(
