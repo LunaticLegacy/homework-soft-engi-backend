@@ -60,20 +60,19 @@ class UserService:
         except Exception as e:
             raise DatabaseConnectionError(f"Unexpected error: {str(e)}")
 
-    async def create_user(self, email: str, full_name: str, password_hash: str, password_salt: Optional[str] = None) -> Dict[str, Any]:
+    async def create_user(self, email: str, full_name: str, password_hash: str) -> Dict[str, Any]:
         try:
             conn = await self.db_manager.get_connection(5.0)
             try:
                 row = await conn.fetchrow(
                     """
-                    INSERT INTO users (email, full_name, password_hash, password_salt)
-                    VALUES ($1, $2, $3, $4)
+                    INSERT INTO users (email, full_name, password_hash)
+                    VALUES ($1, $2, $3)
                     RETURNING id, email, full_name, created_at
                     """,
                     email,
                     full_name,
-                    password_hash,
-                    password_salt,
+                    password_hash
                 )
                 if not row:
                     raise DatabaseConnectionError("Failed to create user")

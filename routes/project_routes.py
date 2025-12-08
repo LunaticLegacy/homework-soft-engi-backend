@@ -1,35 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Any, Dict, Optional
+from dataclasses import dataclass
+
 from pydantic import BaseModel
 from modules.databaseman import DatabaseManager
 from core.database import get_db_manager
 from services.project_service import ProjectService
 from core.exceptions import DatabaseConnectionError, DatabaseTimeoutError
+from routes.models.project_models import (
+    ProjectListRequest,
+    ProjectCreateRequest,
+    ProjectUpdateRequest
+)
 
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
-
-class ProjectCreateRequest(BaseModel):
-    workspace_id: str
-    owner_id: str
-    title: str
-    description: Optional[str] = None
-    start_date: Optional[str] = None
-    due_date: Optional[str] = None
-
-
-class ProjectUpdateRequest(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    start_date: Optional[str] = None
-    due_date: Optional[str] = None
-    archived: Optional[bool] = None
-
-
 def get_project_service(db: DatabaseManager = Depends(get_db_manager)) -> ProjectService:
     return ProjectService(db)
-
 
 @router.post("/", response_model=Dict[str, Any])
 async def create_project(request: ProjectCreateRequest, svc: ProjectService = Depends(get_project_service)):
@@ -46,12 +34,7 @@ async def create_project(request: ProjectCreateRequest, svc: ProjectService = De
     except (DatabaseConnectionError, DatabaseTimeoutError) as exc:
         raise HTTPException(status_code=503 if isinstance(exc, DatabaseConnectionError) else 408, detail=str(exc))
 
-
-class ProjectListRequest(BaseModel):
-    workspace_id: str
-
-
-@router.post("/list", response_model=Dict[str, Any])
+@router.post("/list/", response_model=Dict[str, Any])
 async def list_projects(request: ProjectListRequest, svc: ProjectService = Depends(get_project_service)):
     try:
         data = await svc.list_projects(request.workspace_id)
@@ -60,7 +43,7 @@ async def list_projects(request: ProjectListRequest, svc: ProjectService = Depen
         raise HTTPException(status_code=503 if isinstance(exc, DatabaseConnectionError) else 408, detail=str(exc))
 
 
-@router.get("/{project_id}/", response_model=Dict[str, Any])
+@router.post("/{project_id}/get/", response_model=Dict[str, Any])
 async def get_project(project_id: str, svc: ProjectService = Depends(get_project_service)):
     try:
         data = await svc.get_project(project_id)
@@ -71,7 +54,7 @@ async def get_project(project_id: str, svc: ProjectService = Depends(get_project
         raise HTTPException(status_code=503 if isinstance(exc, DatabaseConnectionError) else 408, detail=str(exc))
 
 
-@router.put("/{project_id}/", response_model=Dict[str, Any])
+@router.post("/{project_id}/update/", response_model=Dict[str, Any])
 async def update_project(project_id: str, request: ProjectUpdateRequest, svc: ProjectService = Depends(get_project_service)):
     try:
         payload: Dict[str, Any] = {k: v for k, v in request.dict().items() if v is not None}
@@ -83,7 +66,7 @@ async def update_project(project_id: str, request: ProjectUpdateRequest, svc: Pr
         raise HTTPException(status_code=503 if isinstance(exc, DatabaseConnectionError) else 408, detail=str(exc))
 
 
-@router.delete("/{project_id}/", response_model=Dict[str, Any])
+@router.delete("/{project_id}/delete/", response_model=Dict[str, Any])
 async def delete_project(project_id: str, svc: ProjectService = Depends(get_project_service)):
     try:
         ok = await svc.delete_project(project_id)

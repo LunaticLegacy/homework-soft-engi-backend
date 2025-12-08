@@ -69,7 +69,11 @@ class WorkspaceService:
             conn = await self.db_manager.get_connection(5.0)
             try:
                 rows = await conn.fetch(
-                    "SELECT id, name, description, owner_user_id, created_at FROM workspaces WHERE deleted_at IS NULL"
+                    """
+                    SELECT id, name, description, owner_user_id, created_at
+                    FROM workspaces
+                    WHERE deleted_at IS NULL
+                    """
                 )
                 return [dict(row) for row in rows]
             finally:
@@ -99,11 +103,55 @@ class WorkspaceService:
             conn = await self.db_manager.get_connection(5.0)
             try:
                 row = await conn.fetchrow(
-                    "SELECT id, name, description, owner_user_id, created_at, updated_at FROM workspaces WHERE id = $1 AND deleted_at IS NULL",
+                    """
+                    SELECT id, name, description, owner_user_id, created_at, updated_at
+                    FROM workspaces
+                    WHERE id = $1
+                    AND deleted_at IS NULL
+                    """,
                     workspace_id
                 )
                 if row:
                     return dict(row)
+                return None
+            finally:
+                await self.db_manager.release_connection(conn)
+        except ConnectionError as e:
+            raise DatabaseConnectionError(f"Failed to connect to database: {str(e)}")
+        except DBTimeoutError as e:
+            raise DatabaseTimeoutError(f"Database operation timed out: {str(e)}")
+        except Exception as e:
+            raise DatabaseConnectionError(f"Unexpected error: {str(e)}")
+    
+    async def get_workspace_by_user_id(self, user_id: str) -> Optional[List[Dict[str, Any]]]:
+        """
+        根据ID获取工作空间信息
+        
+        Args:
+            user_id (str): 用户ID
+            
+        Returns:
+            Optional[Dict[str, Any]]: 该用户具有的工作空间信息，如果未找到则返回None
+            
+        Raises:
+            DatabaseConnectionError: 数据库连接失败
+            DatabaseTimeoutError: 数据库操作超时
+        """
+        try:
+            conn = await self.db_manager.get_connection(5.0)
+            try:
+
+                rows = await conn.fetch(
+                    """
+                    SELECT id, name, description, owner_user_id, created_at, updated_at
+                    FROM workspaces
+                    WHERE owner_user_id = $1
+                    AND deleted_at IS NULL
+                    """,
+                    user_id
+                )
+                if rows:
+                    return [dict(row) for row in rows]
                 return None
             finally:
                 await self.db_manager.release_connection(conn)
