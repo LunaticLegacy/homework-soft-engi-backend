@@ -46,7 +46,7 @@ async def register_user(
     service: UserService = Depends(get_user_service)
 ):
     try:
-        now = datetime.now(UTC)
+        now: datetime = datetime.now(UTC)
         if request.token is not None:
             return {"status": "error", "user_id": None, "message": "Token must be null for registration", "time": str(now)}
 
@@ -72,7 +72,7 @@ async def login_user(
     redisman: RedisManager = Depends(get_redis_manager)
 ):
     try:
-        now = datetime.now(UTC)
+        now: datetime = datetime.now(UTC)
         if request.token is not None:
             return {"status": "error", "message": "Token must be null for login", "time": str(now)}
 
@@ -85,7 +85,7 @@ async def login_user(
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
         id_string: str = str(user["id"])
-        now = datetime.now(UTC)
+        now: datetime = datetime.now(UTC)
         payload = {
             "user_id": id_string,
             "exp": int((now + timedelta(hours=168)).timestamp()),
