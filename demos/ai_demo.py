@@ -34,7 +34,8 @@ async def demo_ai_task():
     await task_manager.decompose_task(
         user_id="acm",
         goal="",
-        workspace_id=None
+        workspace_id="",
+        project_id=""
     )
 
     # 添加上下文存储

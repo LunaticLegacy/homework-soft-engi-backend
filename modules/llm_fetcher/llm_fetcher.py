@@ -106,13 +106,13 @@ class LLMFetcher:
                 # 这俩东西都是可用的
                 if chunk.choices[0].delta.reasoning_content:            # type: ignore
                     if not in_thinking:
-                        yield f"\n\n {'-'*30} 思考中 {'-'*30} \n\n"
+                        yield f"\n\n<THINKING>\n\n"
                         in_thinking = True
                     yield chunk.choices[0].delta.reasoning_content      # type: ignore
 
             if chunk.choices[0].delta.content:
                 if in_thinking:
-                    yield f"\n\n {'-'*30} 思考结束 {'-'*30} \n\n"
+                    yield f"\n\n<THINK END>\n\n"
                     in_thinking = False
                 yield chunk.choices[0].delta.content
 

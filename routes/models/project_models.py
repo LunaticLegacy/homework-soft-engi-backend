@@ -1,9 +1,8 @@
-from typing import Any, Dict, Optional
+from typing import Any, List, Dict, Optional
 from pydantic import BaseModel
 from dataclasses import dataclass
 
 from .base_models import BaseRequest, BaseResponse
-
 
 @dataclass
 class ProjectCreateRequest(BaseRequest):
@@ -47,5 +46,22 @@ class ProjectCreateResponse(BaseResponse):
 @dataclass
 class ProjectListResponse(BaseResponse):
     status: str
-    data: Dict[str, Any]
+    data: List[Dict[str, Any]]
     count: int
+
+@dataclass
+class ProjectGetResponse(BaseResponse):
+    status: str
+    data: Dict[str, Any]
+
+@dataclass
+class ProjectUpdateResponse(BaseResponse):
+    status: str
+    data: Dict[str, Any]
+    message: str
+
+@dataclass
+class ProjectDeleteResponse(BaseResponse):
+    status: str
+    message: str
+

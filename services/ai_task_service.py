@@ -5,6 +5,7 @@ from core.exceptions import DatabaseConnectionError, DatabaseTimeoutError
 from settings import get_settings
 import json
 import uuid
+from datetime import datetime
 
 
 class AITaskService:
@@ -14,6 +15,7 @@ class AITaskService:
         self.db_manager = db_manager
         self.llm_fetcher = llm_fetcher
         prompts = get_settings().prompts
+        # 提取提示词对象。
         self.prompt_task_decompose: str = prompts.task_decompose
         self.prompt_task_suggestion: str = prompts.task_suggestion
 
@@ -21,10 +23,19 @@ class AITaskService:
         self,
         user_id: str,
         goal: str,
-        workspace_id: Optional[str] = None
+        workspace_id: str,
+        project_id: str
     ) -> Dict[str, Any]:
         """
         使用AI将大目标分解为具体任务；流式拉取直到完整JSON生成后再解析。
+        - 该函数会创建一个主任务，主任务为用户子任务的解析。
+        - 在创建任务完毕后，任务将会被储存到数据库内。
+
+        Args:
+            user_id (str): 用户ID。
+            goal (str): 用户目标。
+            workspace_id (str): 目标工作空间ID。
+            project_id (str): 目标工程ID。
         """
         system_prompt = self.prompt_task_decompose
 
@@ -32,6 +43,11 @@ class AITaskService:
 
         full_text: str = ""
         try:
+            db = await self.db_manager.get_connection(5.0)
+
+            # 获取当前模型上下文。
+            # 然后，将模型上下文内容拼接. 
+
             chunks: List[str] = []
             async for chunk in self.llm_fetcher.fetch_stream(
                 msg=user_message,
@@ -48,10 +64,14 @@ class AITaskService:
 
             await self._save_ai_request(user_id, goal, json_text)
 
+            # 随后保存当前上下文
+            await self.db_manager.release_connection(db)
+
             return {
                 "success": True,
                 "data": task_structure,
-                "message": "任务分解成功"
+                "message": "任务分解成功",
+                "timestamp": datetime.now().isoformat()
             }
         except json.JSONDecodeError as exc:
             raise Exception(f"AI返回结果解析失败: {str(exc)} | 片段: {full_text[:200]}")
@@ -61,10 +81,17 @@ class AITaskService:
     async def _save_ai_request(
         self,
         user_id: str,
-        prompt: str,
-        response: str
+        response: str,
+        prompt: Optional[str] = None,
+        status: str = "backlog"
     ) -> None:
-        """保存AI请求记录到数据库。"""
+        """
+        保存AI请求记录到数据库。
+        Args:
+            user_id (str): 用户ID。
+            prompt (str): 用户自定义提示词。（系统提示词全部都是一致的）
+            response (str): 来自LLM的回答。
+        """
         try:
             conn = await self.db_manager.get_connection(5.0)
             try:
@@ -73,7 +100,7 @@ class AITaskService:
                     INSERT INTO ai_requests (id, user_id, prompt, response_text, status)
                     VALUES ($1, $2, $3, $4, $5)
                     """,
-                    str(uuid.uuid4()), user_id, prompt, response, "completed"
+                    str(uuid.uuid4()), user_id, prompt, response, status
                 )
             finally:
                 await self.db_manager.release_connection(conn)
@@ -86,7 +113,10 @@ class AITaskService:
         user_id: str,
         task_id: str
     ) -> Dict[str, Any]:
-        """获取特定任务的AI建议。"""
+        """
+        获取特定任务的AI建议。
+        
+        """
         try:
             task_info = await self._get_task_info(task_id)
             system_prompt = self.prompt_task_suggestion
@@ -108,7 +138,8 @@ class AITaskService:
             return {
                 "success": True,
                 "data": suggestions,
-                "message": "建议获取成功"
+                "message": "建议获取成功",
+                "timestamp": datetime.now().isoformat()
             }
 
         except Exception as exc:
@@ -135,7 +166,10 @@ class AITaskService:
         except Exception as exc:
             raise Exception(f"获取任务信息失败: {str(exc)}")
 
-    def _extract_json_block(self, text: str) -> str:
+    def _extract_json_block(
+            self, 
+            text: str
+        ) -> str:
         """从流式文本中提取首个JSON块。"""
         start: int = text.find("{")
         end: int = text.rfind("}")

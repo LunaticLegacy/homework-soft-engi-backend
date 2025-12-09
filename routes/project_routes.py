@@ -23,6 +23,9 @@ from routes.models.project_models import (  # 路由
     ProjectDeleteRequest,
     ProjectCreateResponse,
     ProjectListResponse,
+    ProjectGetResponse,
+    ProjectUpdateResponse,
+    ProjectDeleteResponse,
 )
 
 
@@ -81,7 +84,7 @@ async def list_projects(
         raise HTTPException(status_code=503 if isinstance(exc, DatabaseConnectionError) else 408, detail=str(exc))
 
 
-@router.post("/{project_id}/get/", response_model=Dict[str, Any])
+@router.post("/{project_id}/get/", response_model=ProjectGetResponse)
 async def get_project(
     project_id: str, 
     svc: ProjectService = Depends(get_project_service)
@@ -100,7 +103,7 @@ async def get_project(
         raise HTTPException(status_code=503 if isinstance(exc, DatabaseConnectionError) else 408, detail=str(exc))
 
 
-@router.post("/{project_id}/update/", response_model=Dict[str, Any])
+@router.post("/{project_id}/update/", response_model=ProjectUpdateResponse)
 async def update_project(
     project_id: str, 
     request: ProjectUpdateRequest, 
@@ -121,7 +124,7 @@ async def update_project(
         raise HTTPException(status_code=503 if isinstance(exc, DatabaseConnectionError) else 408, detail=str(exc))
 
 
-@router.delete("/{project_id}/delete/", response_model=Dict[str, Any])
+@router.delete("/{project_id}/delete/", response_model=ProjectDeleteResponse)
 async def delete_project(
     project_id: str, 
     svc: ProjectService = Depends(get_project_service)

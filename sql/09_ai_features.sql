@@ -19,7 +19,7 @@ CREATE TABLE ai_requests (
     response JSONB, -- 原始响应
     response_text TEXT, -- 快速索引
     cost NUMERIC(12,6) DEFAULT 0,
-    status TEXT DEFAULT 'completed',
+    status TEXT DEFAULT 'done',
     metadata JSONB DEFAULT '{}'::JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
@@ -52,7 +52,7 @@ CREATE TABLE ai_chats (
 CREATE TABLE ai_chat_messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     chat_id UUID REFERENCES ai_chats(id) ON DELETE CASCADE,
-    role TEXT, -- 'user','assistant','system'
+    role TEXT, -- 'user', 'assistant', 'system'
     content TEXT,
     content_json JSONB,
     model_id UUID REFERENCES ai_models(id),

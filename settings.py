@@ -104,8 +104,8 @@ settings = AppSettings(
     ),
     prompts=PromptsSettings(
         # 提示词
-        task_decompose=task_sug_msg,
-        task_suggestion=task_comp_msg
+        task_decompose=task_comp_msg,
+        task_suggestion=task_sug_msg,
     ),
 )
 
