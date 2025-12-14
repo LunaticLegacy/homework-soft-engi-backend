@@ -3,8 +3,13 @@ from typing import Dict, Optional, Any, List
 from pydantic import BaseModel
 from modules.databaseman import DatabaseManager
 from modules.redisman import RedisManager
-from core.database import get_db_manager
-from core.redis_cache import get_redis_manager
+
+from core.utils.getters import (
+    get_user_service, get_workspace_service,
+    get_db_manager, get_redis_manager
+)
+from core.utils.user_id_fetch import get_user_id_from_redis_by_token
+
 from services.workspace_service import WorkspaceService
 from services.user_service import UserService
 from core.exceptions import DatabaseConnectionError, DatabaseTimeoutError
@@ -32,13 +37,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 router = APIRouter(prefix="/workspaces", tags=["workspaces"])
 
-
-def get_workspace_service(db: DatabaseManager = Depends(get_db_manager)) -> WorkspaceService:
-    return WorkspaceService(db)
-
-def get_user_service(db: DatabaseManager = Depends(get_db_manager)) -> UserService:
-    return UserService(db)
-
 @router.post("/create/", response_model=WorkspaceCreateResponse)
 async def create_workspace(
     request: WorkspaceCreateRequest,
@@ -49,19 +47,9 @@ async def create_workspace(
 ):
     """创建工作空间。"""
     try:
-        # redis检测头：获取用户ID
-        token: Optional[str] = request.token
-        if not token:
-            raise HTTPException(status_code=403, detail="You are still not logged in, please login at first.")
+        user_id: str = await get_user_id_from_redis_by_token(request.token)
 
-        id_sets: Optional[Any] = await redisman.get(token, deserialize="json")
-        if not id_sets:
-            raise HTTPException(status_code=403, detail="Invalid User")
-
-        user_id: str = dict(id_sets)["user_id"]
-        # 检测头结束
-
-        now = datetime.now(UTC)
+        now: datetime = datetime.now(UTC)
         workspace = await svc.create_workspace(request.name, request.description, owner_user_id=user_id)
         return {"status": "success", "data": workspace, "message": "创建成功", "time": str(now)}
     except (DatabaseConnectionError, DatabaseTimeoutError) as e:
@@ -78,17 +66,7 @@ async def list_workspaces(
 ):
     """获取当前用户下的工作空间列表。"""
     try:
-        # redis检测头：获取用户ID
-        token: Optional[str] = request.token
-        if not token:
-            raise HTTPException(status_code=403, detail="You are still not logged in, please login at first.")
- 
-        user_data: Optional[Dict] = await redisman.get(key=token, deserialize="json")
-        if not user_data:
-            raise HTTPException(status_code=500, detail="Redis error when deleting workspace.")
-        
-        user_id: str = user_data["user_id"]
-        # 检测头结束
+        user_id: str = await get_user_id_from_redis_by_token(request.token)
 
         # 正式逻辑
         data: Optional[List[Dict[str, Any]]] | List = await svc.get_workspace_by_user_id(user_id)
@@ -96,7 +74,7 @@ async def list_workspaces(
             data = []
         data = list(data)
 
-        now = datetime.now(UTC)
+        now: datetime = datetime.now(UTC)
         return {"status": "success", "data": data, "count": len(data), "time": str(now)}
     except (DatabaseConnectionError, DatabaseTimeoutError) as e:
         raise HTTPException(status_code=503 if isinstance(e, DatabaseConnectionError) else 408, detail=str(e))
@@ -117,7 +95,7 @@ async def get_workspace(
         
         if not ws:
             raise HTTPException(status_code=404, detail="Workspace not found")
-        now = datetime.now(UTC)
+        now: datetime = datetime.now(UTC)
         return {"status": "success", "data": ws, "time": str(now)}
     except (DatabaseConnectionError, DatabaseTimeoutError) as e:
         raise HTTPException(status_code=503 if isinstance(e, DatabaseConnectionError) else 408, detail=str(e))
@@ -133,17 +111,7 @@ async def update_workspace(
 ):
     """更新工作空间。"""
     try:
-        # redis检测头：获取用户ID
-        token: Optional[str] = request.token
-        if not token:
-            raise HTTPException(status_code=403, detail="You are still not logged in, please login at first.")
- 
-        user_data: Optional[Dict] = await redisman.get(key=token, deserialize="json")
-        if not user_data:
-            raise HTTPException(status_code=500, detail="Redis error when deleting workspace.")
-        
-        user_id: str = user_data["user_id"]
-        # 检测头结束
+        user_id: str = await get_user_id_from_redis_by_token(request.token)
 
         # 检查工作空间所有者ID是否正确。
         result: Optional[List[Dict[str, Any]]] = await svc.get_workspace_by_user_id(user_id=user_id)
@@ -154,7 +122,7 @@ async def update_workspace(
         updated = await svc.update_workspace(workspace_id, request.name, request.description)
         if not updated:
             raise HTTPException(status_code=404, detail="Workspace not found")
-        now = datetime.now(UTC)
+        now: datetime = datetime.now(UTC)
         return {"status": "success", "data": updated, "message": "更新成功", "time": str(now)}
     except (DatabaseConnectionError, DatabaseTimeoutError) as e:
         raise HTTPException(status_code=503 if isinstance(e, DatabaseConnectionError) else 408, detail=str(e))
@@ -170,17 +138,7 @@ async def delete_workspace(
 ):
     """删除工作空间。"""
     try:
-        # redis检测头：获取用户ID
-        token: Optional[str] = request.token
-        if not token:
-            raise HTTPException(status_code=403, detail="You are still not logged in, please login at first.")
- 
-        user_data: Optional[Dict] = await redisman.get(key=token, deserialize="json")
-        if not user_data:
-            raise HTTPException(status_code=500, detail="Redis error when deleting workspace.")
-        
-        user_id: str = user_data["user_id"]
-        # 检测头结束
+        user_id: str = await get_user_id_from_redis_by_token(request.token)
 
         # 检查目标工作空间所属人是否为该ID持有者。
         target = await svc.get_workspace_by_id(workspace_id=workspace_id)
@@ -197,7 +155,7 @@ async def delete_workspace(
         ok = await svc.delete_workspace(workspace_id)
         if not ok:
             raise HTTPException(status_code=404, detail="Workspace not found")
-        now = datetime.now(UTC)
+        now: datetime = datetime.now(UTC)
         return {"status": "success", "message": "删除成功", "time": str(now)}
     except (DatabaseConnectionError, DatabaseTimeoutError) as e:
         raise HTTPException(status_code=503 if isinstance(e, DatabaseConnectionError) else 408, detail=str(e))

@@ -260,3 +260,22 @@ class WorkspaceService:
             raise DatabaseTimeoutError(f"Database operation timed out: {str(e)}")
         except Exception as e:
             raise DatabaseConnectionError(f"Unexpected error: {str(e)}")
+        
+
+async def test():
+    """
+    本单元使用的测试用函数。
+    """
+    from modules.databaseman import DatabaseManager
+    from core.config import load_config
+    conf = load_config()
+        
+    dbman: DatabaseManager = DatabaseManager(**conf["database"])
+    wkspace = WorkspaceService(dbman)
+    await wkspace.get_workspace_by_id("0000009999")
+
+
+if __name__ == "__main__":
+    # 测试段
+    import asyncio
+    asyncio.run(test())    

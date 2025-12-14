@@ -1,17 +1,8 @@
-from typing import Any, Dict, Optional
+from typing import Any, List, Dict, Optional
 from pydantic import BaseModel
 from dataclasses import dataclass
 
 from .base_models import BaseRequest, BaseResponse
-
-
-@dataclass
-class ProjectListRequest(BaseRequest):
-    workspace_id: str
-
-@dataclass
-class ProjectGetRequest(BaseRequest):
-    pass
 
 @dataclass
 class ProjectCreateRequest(BaseRequest):
@@ -22,6 +13,13 @@ class ProjectCreateRequest(BaseRequest):
     start_date: Optional[str] = None
     due_date: Optional[str] = None
 
+@dataclass
+class ProjectListRequest(BaseRequest):
+    workspace_id: str
+
+@dataclass
+class ProjectGetRequest(BaseRequest):
+    pass
 
 @dataclass
 class ProjectUpdateRequest(BaseRequest):
@@ -38,3 +36,32 @@ class ProjectDeleteRequest(BaseRequest):
     start_date: Optional[str] = None
     due_date: Optional[str] = None
     archived: Optional[bool] = None
+
+@dataclass
+class ProjectCreateResponse(BaseResponse):
+    status: str
+    data: Dict[str, Any]
+    message: str
+
+@dataclass
+class ProjectListResponse(BaseResponse):
+    status: str
+    data: List[Dict[str, Any]]
+    count: int
+
+@dataclass
+class ProjectGetResponse(BaseResponse):
+    status: str
+    data: Dict[str, Any]
+
+@dataclass
+class ProjectUpdateResponse(BaseResponse):
+    status: str
+    data: Dict[str, Any]
+    message: str
+
+@dataclass
+class ProjectDeleteResponse(BaseResponse):
+    status: str
+    message: str
+
