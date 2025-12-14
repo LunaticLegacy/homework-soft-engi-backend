@@ -28,15 +28,9 @@ async def demo_ai_task():
     config: Dict[str, Any] = load_config()
 
     db_manager = DatabaseManager(**config["database"])
+    await db_manager.init_pool()
     llm_fetcher = LLMFetcher(**config["llm"])
     task_manager = AITaskService(llm_fetcher=llm_fetcher, db_manager=db_manager)
-
-    await task_manager.decompose_task(
-        user_id="acm",
-        goal="",
-        workspace_id="",
-        project_id=""
-    )
 
     # 添加上下文存储
     context_history: List[Tuple[str, str]] = []  # 存储 (role, content) 的元组
@@ -54,13 +48,18 @@ async def demo_ai_task():
             print("正在获取AI建议...")
             
             # 构造系统提示词
-            system_prompt: str = get_settings().prompts.task_suggestion
+            system_prompt: str = get_settings().prompts.task_decompose
+            
+            # 准备完整的对话历史
+            messages = []
+            messages.append({"role": "system", "content": system_prompt})
+            for role, content in context_history:
+                messages.append({"role": role, "content": content})
             
             # 调用LLM，并显示结果
             full_response = ""
-            async for chunk in llm_fetcher.fetch_stream(
-                msg=user_question,
-                system_prompt=system_prompt,
+            async for chunk in llm_fetcher.fetch_stream_with_context(
+                messages=messages,
                 temperature=0.7,
                 max_tokens=8192
             ):
@@ -145,7 +144,7 @@ def main():
     print("AI功能演示\n")
     
     # 运行演示
-    asyncio.run(demo_ai_chat())
+    asyncio.run(demo_ai_task())
     
     print("\n=== 演示结束 ===")
 

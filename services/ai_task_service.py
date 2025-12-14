@@ -1,6 +1,5 @@
 from typing import Dict, List, Any, Optional
-from modules.llm_fetcher.llm_fetcher import LLMFetcher
-from modules.databaseman import DatabaseManager, DBTimeoutError
+from modules import LLMFetcher, DatabaseManager, DBTimeoutError
 from core.exceptions import DatabaseConnectionError, DatabaseTimeoutError
 from settings import get_settings
 import json
@@ -44,6 +43,7 @@ class AITaskService:
         full_text: str = ""
         try:
             db = await self.db_manager.get_connection(5.0)
+            await db.execute("")
 
             # 获取当前模型上下文。
             # 然后，将模型上下文内容拼接. 

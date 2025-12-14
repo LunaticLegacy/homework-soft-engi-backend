@@ -1,8 +1,8 @@
 from openai import OpenAI
-from openai.types.chat import ChatCompletion
+from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 
 import asyncio
-from typing import Callable, Optional, AsyncGenerator
+from typing import Callable, Optional, AsyncGenerator, List, Dict, Any
 
 class LLMFetcher:
     def __init__(
@@ -63,6 +63,29 @@ class LLMFetcher:
         )
         return response
     
+    def fetch_with_context(
+        self,
+        messages: List[ChatCompletionMessageParam],
+        temperature: float = 0.4,
+        max_tokens: int = 4096
+    ) -> ChatCompletion:
+        """
+        使用完整对话上下文与LLM对话。
+
+        Args:
+            messages (List[ChatCompletionMessageParam]): 完整的对话历史，包括系统提示词。
+            temperature (float): 当前温度。
+            max_tokens (int): 最大token数量。
+        """
+        response = self.context.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            stream=False
+        )
+        return response
+    
     async def fetch_stream(
         self,
         msg: str,
@@ -93,6 +116,46 @@ class LLMFetcher:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": msg},
             ],
+            max_tokens=max_tokens,
+            temperature=temperature,
+            stream=True,
+            stream_options={}
+        )
+        in_thinking: bool = False
+
+        for chunk in response:
+            delta = chunk.choices[0].delta
+            if hasattr(delta, "reasoning_content"):
+                # 这俩东西都是可用的
+                if chunk.choices[0].delta.reasoning_content:            # type: ignore
+                    if not in_thinking:
+                        yield f"\n\n<THINKING>\n\n"
+                        in_thinking = True
+                    yield chunk.choices[0].delta.reasoning_content      # type: ignore
+
+            if chunk.choices[0].delta.content:
+                if in_thinking:
+                    yield f"\n\n<THINK END>\n\n"
+                    in_thinking = False
+                yield chunk.choices[0].delta.content
+    
+    async def fetch_stream_with_context(
+        self,
+        messages: List[ChatCompletionMessageParam],
+        temperature: float = 0.4,
+        max_tokens: int = 4096
+    ) -> AsyncGenerator[str, None]:
+        """
+        使用完整对话上下文的流式对话方法。
+
+        Args:
+            messages (List[ChatCompletionMessageParam]): 完整的对话历史，包括系统提示词。
+            temperature (float): 当前温度。
+            max_tokens (int): 最大token数量。
+        """
+        response = self.context.chat.completions.create(
+            model=self.model,
+            messages=messages,
             max_tokens=max_tokens,
             temperature=temperature,
             stream=True,
