@@ -68,7 +68,8 @@ class LLMFetcher:
         msg: str,
         system_prompt: Optional[str] = None,
         temperature: float = 0.4,
-        max_tokens: int = 4096
+        max_tokens: int = 4096,
+        output_reasoning: bool = False
     ) -> AsyncGenerator[str, None]:
         """
         流式对话方法。使用方法：
@@ -79,10 +80,11 @@ class LLMFetcher:
         ```
 
         Args:
-            msg (str): 你要说的话。
+            msg (str): 你要给LLM发送的信息。
             system_prompt (str): 系统提示词。
             temperature (float): 当前温度。
             max_tokens (int): 最大token数量。
+            output_reasoning (bool): 是否输出正在思考的内容。
         """
         if not system_prompt:
             system_prompt = ""
@@ -102,20 +104,21 @@ class LLMFetcher:
 
         for chunk in response:
             delta = chunk.choices[0].delta
+
             if hasattr(delta, "reasoning_content"):
                 # 这俩东西都是可用的
                 if chunk.choices[0].delta.reasoning_content:            # type: ignore
-                    if not in_thinking:
-                        yield f"\n\n<THINKING>\n\n"
-                        in_thinking = True
-                    yield chunk.choices[0].delta.reasoning_content      # type: ignore
+                    if output_reasoning:
+                        if in_thinking == False:
+                            yield f"\n<<<THINKING>>>\n"
+                            in_thinking = True
+                        yield chunk.choices[0].delta.reasoning_content      # type: ignore
 
-            if chunk.choices[0].delta.content:
-                if in_thinking:
-                    yield f"\n\n<THINK END>\n\n"
-                    in_thinking = False
-                yield chunk.choices[0].delta.content
-
+                if chunk.choices[0].delta.content:
+                    if in_thinking:
+                        yield f"\n<<<THINK_END>>>\n"
+                        in_thinking = False
+                    yield chunk.choices[0].delta.content
 
 async def chat_test():
     llm = LLMFetcher(

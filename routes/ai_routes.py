@@ -65,6 +65,40 @@ async def decompose_task(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/decompose/{ai_request_id}/", response_model=Dict[str, Any])
+async def get_task_decomposition(
+    ai_request_id: str,
+    user_id: str,
+    service: AITaskService = Depends(get_ai_service)
+) -> Dict[str, Any]:
+    """
+    获取已存储的任务分解结果
+    
+    Args:
+        ai_request_id (str): AI请求ID
+        user_id (str): 用户ID
+        service (AITaskService): AI任务服务实例
+        
+    Returns:
+        Dict[str, Any]: 存储的任务分解结果
+    """
+    try:
+        result = await service.get_task_decomposition(user_id, ai_request_id)
+        if result:
+            return {
+                "success": True,
+                "data": result,
+                "message": "获取任务分解结果成功"
+            }
+        else:
+            raise HTTPException(status_code=404, detail="未找到对应的任务分解结果")
+    except DatabaseConnectionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except DatabaseTimeoutError as e:
+        raise HTTPException(status_code=408, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/suggestions/{task_id}/", response_model=Dict[str, Any])
 async def get_task_suggestions(
     task_id: str,
@@ -139,7 +173,8 @@ async def chat_with_ai_stream(
     request: ChatRequest,
     llm_fetcher: LLMFetcher = Depends(get_llm_fetcher),
     service: AITaskService = Depends(get_ai_service),
-    redis_man: RedisManager = Depends(get_redis_manager)
+    redis_man: RedisManager = Depends(get_redis_manager),
+    database: DatabaseManager = Depends(get_db_manager)
 ):
     """
     与AI进行流式对话
@@ -155,16 +190,32 @@ async def chat_with_ai_stream(
     try:
         # 默认系统提示词
         system_prompt = request.system_prompt
+        request.workspace_id
+        request.project_id
+
         if not system_prompt:
             system_prompt = load_config()["prompts"]["task_decompose"]
-#             system_prompt = """
-# 你是一只说话带一点机械感的猫娘，你需要在每一句话后面都加上“喵”，并且以句号结尾。
-# 如果用户没有主动说话，你就先打招呼介绍自己。输出要尽可能长一点。
-# """
         
-        # 构建历史对话上下文
-        history_key = f"chat_history:{request.user_id}"
+        # 从redis获取用户ID
+        user_id: str = await get_user_id_from_redis_by_token(request.token)
+
+        history_key = f"chat_history:{request.project_id},{request.user_id},{request.workspace_id}"
+
+        # 从redis里获取上下文，现在这个东西仅仅是一个作用在内存系统中的东西。
         history: List = await redis_man.get(history_key) or []
+
+        db = await database.get_connection(5.0)
+
+        # 中间这里规划是要写入SQL的。
+
+        # context = await db.fetchrow(
+        #     """
+        #     SELECT ()
+        #     FROM projects
+        #     """,
+        # )
+        await database.release_connection(db)
+
         await redis_man.delete(history_key)
         
         # 准备消息历史
@@ -182,7 +233,8 @@ async def chat_with_ai_stream(
                 msg=request.message,
                 system_prompt=system_prompt,
                 temperature=0.7,
-                max_tokens=2048
+                max_tokens=4096,
+                output_reasoning=True
             ):
                 full_response += chunk
                 yield chunk
@@ -191,6 +243,9 @@ async def chat_with_ai_stream(
             nonlocal history
             history.append({"role": "user", "content": request.message})
             history.append({"role": "assistant", "content": full_response})
+            print("Now hisotries:", len(history))
+
+            json_msg: Optional[str] = service._extract_json_block(full_response)
             
             # 只保留最近10轮对话
             if len(history) > 20:  # 10轮对话包含用户和助手的消息

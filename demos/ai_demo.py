@@ -27,16 +27,7 @@ async def demo_ai_task():
     # 创建LLM获取器
     config: Dict[str, Any] = load_config()
 
-    db_manager = DatabaseManager(**config["database"])
     llm_fetcher = LLMFetcher(**config["llm"])
-    task_manager = AITaskService(llm_fetcher=llm_fetcher, db_manager=db_manager)
-
-    await task_manager.decompose_task(
-        user_id="acm",
-        goal="",
-        workspace_id="",
-        project_id=""
-    )
 
     # 添加上下文存储
     context_history: List[Tuple[str, str]] = []  # 存储 (role, content) 的元组
@@ -54,7 +45,7 @@ async def demo_ai_task():
             print("正在获取AI建议...")
             
             # 构造系统提示词
-            system_prompt: str = get_settings().prompts.task_suggestion
+            system_prompt: str = get_settings().prompts.task_decompose
             
             # 调用LLM，并显示结果
             full_response = ""
@@ -62,7 +53,8 @@ async def demo_ai_task():
                 msg=user_question,
                 system_prompt=system_prompt,
                 temperature=0.7,
-                max_tokens=8192
+                max_tokens=8192,
+                output_reasoning=True
             ):
                 print(chunk, end="", flush=True)
                 full_response += chunk
@@ -125,12 +117,6 @@ async def demo_ai_chat():
             # 显示上下文历史（可选）
             print(f"\n\n当前上下文历史包含 {len(context_history)} 条消息")
             
-            print("演示完成！")
-            print("\n实际使用时，此功能将：")
-            print("1. 接收用户问题")
-            print("2. 调用LLM获取专业建议")
-            print("3. 返回AI的回答")
-
         except KeyboardInterrupt:
             print("== 用户主动退出 ==")
             running = False
@@ -145,7 +131,7 @@ def main():
     print("AI功能演示\n")
     
     # 运行演示
-    asyncio.run(demo_ai_chat())
+    asyncio.run(demo_ai_task())
     
     print("\n=== 演示结束 ===")
 

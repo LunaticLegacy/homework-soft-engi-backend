@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from core.middleware import log_requests, error_handler
 from core.exceptions import register_exception_handlers
+import asyncio
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,10 +33,22 @@ async def lifespan(app: FastAPI):
         try:
             from core.database import db_manager
             from core.redis_cache import redis_manager
-            await db_manager.close_all_connections()
+            
+            # 在关闭前显示活跃连接数
+            active_connections = db_manager.get_active_connections_count()
+            print(f"Active database connections before shutdown: {active_connections}")
+            
+            # 使用超时机制关闭数据库连接池
+            try:
+                await asyncio.wait_for(db_manager.close_all_connections(), timeout=30.0)
+                print("Database connections closed successfully.")
+            except asyncio.TimeoutError:
+                print("WARNING: Database connection pool closing timed out!")
+                
             await redis_manager.close_pool()
+            print("Redis connections closed successfully.")
 
-        except:
+        except Exception as e:
             pass
 
 def create_app() -> FastAPI:

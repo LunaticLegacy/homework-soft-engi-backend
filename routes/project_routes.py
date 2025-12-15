@@ -44,10 +44,11 @@ async def create_project(
             await workspace.get_workspace_by_id(request.workspace_id)
 
         if not workspace_data:
-            raise HTTPException(404, "Not Found")
+            raise HTTPException(400, "Workspace not found")
 
-        if workspace_data["owner_user_id"] != user_id:
-            raise HTTPException(404, "Not Found")
+        # 确保在比较UUID时，两边都是字符串类型
+        if str(workspace_data["owner_user_id"]) != str(user_id):
+            raise HTTPException(403, "Access denied")
 
         data = await svc.create_project(
             request.workspace_id,

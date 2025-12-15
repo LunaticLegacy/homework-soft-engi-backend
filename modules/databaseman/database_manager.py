@@ -45,6 +45,8 @@ class DatabaseManager:
         self.maxconn: int = maxconn
 
         self.connection_pool: Optional[asyncpg.pool.Pool] = None
+        # 添加活跃连接计数器
+        self._active_connections = 0
 
     async def init_pool(self) -> None:
         """
@@ -62,6 +64,7 @@ class DatabaseManager:
                 port=self.db_port,
                 timeout=10
             )
+            self._active_connections = 0
             pass
         except Exception as e:
             raise ConnectionError(f"Failed to initialize asyncpg pool: {str(e)}")
@@ -85,12 +88,13 @@ class DatabaseManager:
                     "Connection pool is not initialized. " \
                     "Use init_pool() before get connection."
                 )
-            return await self.connection_pool.acquire(timeout=timeout)
+            connection = await self.connection_pool.acquire(timeout=timeout)
+            self._active_connections += 1
+            return connection
         except asyncio.TimeoutError:
             raise DBTimeoutError(f"Timeout for {timeout} seconds without free connection.")
         except Exception as e:
             raise EOFError(f"A Special error here: {e!r}") from e
-
 
     async def release_connection(self, connection: asyncpg.Connection) -> None:
         """
@@ -101,14 +105,25 @@ class DatabaseManager:
         """
         if self.connection_pool is not None:
             await self.connection_pool.release(connection)
+            self._active_connections -= 1
 
     async def close_all_connections(self) -> None:
         """
         关闭连接池。
         """
         if self.connection_pool is not None:
-            await self.connection_pool.close()
-            self.connection_pool = None
+            # 显示当前活跃连接数
+            print(f"WARNING: There are {self._active_connections} active connections that may not be released!")
+            
+            try:
+                # 使用 asyncio.wait_for 设置超时
+                await asyncio.wait_for(self.connection_pool.close(), timeout=30.0)
+            except asyncio.TimeoutError:
+                pass
+                # 如果超时，我们仍然将连接池设为None
+            finally:
+                self.connection_pool = None
+                self._active_connections = 0
     
     @asynccontextmanager
     async def acquire(self):
@@ -126,6 +141,15 @@ class DatabaseManager:
             yield conn
         finally:
             await self.release_connection(conn)
+
+    def get_active_connections_count(self) -> int:
+        """
+        获取当前活跃连接数。
+        
+        Returns:
+            int: 当前活跃连接数
+        """
+        return self._active_connections
 
 # 使用示例
 async def main():

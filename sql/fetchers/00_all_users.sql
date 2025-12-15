@@ -14,4 +14,4 @@
 
 -- 获取特定ID用户的工作空间
 SELECT *
-FROM projects;
+FROM users;

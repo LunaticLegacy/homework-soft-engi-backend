@@ -23,7 +23,7 @@ async def get_user_id_from_redis_by_token(
 
     user_data: Optional[Dict] = await redisman.get(key=token, deserialize="json")
     if not user_data:
-        raise HTTPException(status_code=500, detail="Redis error when deleting workspace.")
+        raise HTTPException(status_code=500, detail="Redis error when getting user ID.")
     
     user_id: str = user_data["user_id"]
     return user_id

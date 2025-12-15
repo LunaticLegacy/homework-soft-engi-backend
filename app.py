@@ -21,6 +21,7 @@ if __name__ == "__main__":
     # 运行应用
     if ssl_keyfile and ssl_certfile:
         # 如果有证书，则运行https
+        print("==== Server runs in HTTPS mode ====")
         uvicorn.run(
             "app:app", 
             ssl_keyfile=ssl_keyfile,
@@ -28,4 +29,5 @@ if __name__ == "__main__":
             **server_config
         )
     else:   # 否则http
+        print("---- Server runs in HTTP mode ----")
         uvicorn.run("app:app", **server_config)

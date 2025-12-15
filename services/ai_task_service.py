@@ -59,10 +59,15 @@ class AITaskService:
                     chunks.append(chunk)
 
             full_text = "".join(chunks)
-            json_text: str = self._extract_json_block(full_text)
+            json_text: Optional[str] = self._extract_json_block(full_text)
+            if not json_text:
+                raise ValueError("JSON分解失败：未产生任务。")
             task_structure = json.loads(json_text)
 
-            await self._save_ai_request(user_id, goal, json_text)
+            ai_request_id = await self._save_ai_request(user_id, goal, json_text)
+            
+            # 保存任务分解结果和上下文
+            await self._save_task_decomposition(ai_request_id, user_id, task_structure, workspace_id, project_id)
 
             # 随后保存当前上下文
             await self.db_manager.release_connection(db)
@@ -81,18 +86,23 @@ class AITaskService:
     async def _save_ai_request(
         self,
         user_id: str,
+        prompt: str,
         response: str,
-        prompt: Optional[str] = None,
-        status: str = "backlog"
-    ) -> None:
+        status: str = "done"
+    ) -> str:
         """
         保存AI请求记录到数据库。
         Args:
             user_id (str): 用户ID。
-            prompt (str): 用户自定义提示词。（系统提示词全部都是一致的）
+            prompt (str): 用户输入的提示词。
             response (str): 来自LLM的回答。
+            status (str): 请求状态，默认为'done'
+        
+        Returns:
+            str: 生成的ai_request_id
         """
         try:
+            ai_request_id = str(uuid.uuid4())
             conn = await self.db_manager.get_connection(5.0)
             try:
                 await conn.execute(
@@ -100,13 +110,95 @@ class AITaskService:
                     INSERT INTO ai_requests (id, user_id, prompt, response_text, status)
                     VALUES ($1, $2, $3, $4, $5)
                     """,
-                    str(uuid.uuid4()), user_id, prompt, response, status
+                    ai_request_id, user_id, prompt, response, status
                 )
+                return ai_request_id
             finally:
                 await self.db_manager.release_connection(conn)
         except Exception as exc:
             # 记录日志但不中断主流程
             print(f"保存AI请求记录失败: {str(exc)}")
+            return ""
+
+    async def _save_task_decomposition(
+        self,
+        ai_request_id: str,
+        user_id: str,
+        task_structure: Dict[str, Any],
+        workspace_id: str,
+        project_id: str
+    ) -> None:
+        """
+        保存任务分解结果到数据库。
+        Args:
+            ai_request_id (str): 关联的AI请求ID。
+            user_id (str): 用户ID。
+            task_structure (Dict[str, Any]): 任务分解结构。
+            workspace_id (str): 工作空间ID。
+            project_id (str): 项目ID。
+        """
+        try:
+            conn = await self.db_manager.get_connection(5.0)
+            try:
+                # 保存任务分解结果
+                await conn.execute(
+                    """
+                    INSERT INTO ai_task_suggestions 
+                    (ai_request_id, user_id, suggestion, metadata)
+                    VALUES ($1, $2, $3, $4)
+                    """,
+                    ai_request_id, user_id, json.dumps(task_structure), 
+                    json.dumps({
+                        "workspace_id": workspace_id,
+                        "project_id": project_id
+                    })
+                )
+            finally:
+                await self.db_manager.release_connection(conn)
+        except Exception as exc:
+            # 记录日志但不中断主流程
+            print(f"保存任务分解结果失败: {str(exc)}")
+
+    async def get_task_decomposition(
+        self,
+        user_id: str,
+        ai_request_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        从数据库获取任务分解结果。
+        Args:
+            user_id (str): 用户ID。
+            ai_request_id (str): AI请求ID。
+        
+        Returns:
+            Optional[Dict[str, Any]]: 任务分解结果，如果找不到则返回None。
+        """
+        try:
+            conn = await self.db_manager.get_connection(5.0)
+            try:
+                row = await conn.fetchrow(
+                    """
+                    SELECT id, ai_request_id, suggestion, metadata, created_at
+                    FROM ai_task_suggestions 
+                    WHERE ai_request_id = $1 AND user_id = $2
+                    """,
+                    ai_request_id, user_id
+                )
+                
+                if row:
+                    return {
+                        "id": row["id"],
+                        "ai_request_id": row["ai_request_id"],
+                        "suggestion": json.loads(row["suggestion"]) if isinstance(row["suggestion"], str) else row["suggestion"],
+                        "metadata": json.loads(row["metadata"]) if isinstance(row["metadata"], str) else row["metadata"],
+                        "created_at": row["created_at"].isoformat() if row["created_at"] else None
+                    }
+                return None
+            finally:
+                await self.db_manager.release_connection(conn)
+        except Exception as exc:
+            print(f"获取任务分解结果失败: {str(exc)}")
+            return None
 
     async def get_task_suggestions(
         self,
@@ -131,6 +223,9 @@ class AITaskService:
             )
 
             ai_response_content = response.choices[0].message.content
+            if ai_response_content is None:
+                raise Exception("AI返回内容为空")
+
             suggestions = json.loads(ai_response_content)
 
             await self._save_ai_request(user_id, user_message, ai_response_content)
@@ -166,13 +261,16 @@ class AITaskService:
         except Exception as exc:
             raise Exception(f"获取任务信息失败: {str(exc)}")
 
-    def _extract_json_block(
-            self, 
-            text: str
-        ) -> str:
-        """从流式文本中提取首个JSON块。"""
-        start: int = text.find("{")
-        end: int = text.rfind("}")
-        if start == -1 or end == -1 or end <= start:
-            raise json.JSONDecodeError("未找到有效的JSON边界", text, 0)
-        return text[start:end + 1]
+    def _extract_json_block(self, text: str) -> Optional[str]:
+        begin = "<<<JSON_BEGIN>>>"
+        end = "<<<JSON_END>>>"
+
+        b = text.find(begin)
+        if b == -1:
+            return
+
+        e = text.find(end, b + len(begin))
+        if e == -1:
+            return
+
+        return text[b + len(begin): e].strip()
