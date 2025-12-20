@@ -262,15 +262,44 @@ class AITaskService:
             raise Exception(f"获取任务信息失败: {str(exc)}")
 
     def _extract_json_block(self, text: str) -> Optional[str]:
+        """
+        提取出JSON任务块内容，优先使用标记，否则回退到大括号匹配。
+        返回原始JSON字符串；若找不到有效JSON则返回None。
+        """
         begin = "<<<JSON_BEGIN>>>"
         end = "<<<JSON_END>>>"
 
         b = text.find(begin)
-        if b == -1:
-            return
+        if b != -1:
+            e = text.find(end, b + len(begin))
+            if e != -1:
+                candidate = text[b + len(begin): e].strip()
+                if candidate:
+                    return candidate
 
-        e = text.find(end, b + len(begin))
-        if e == -1:
-            return
+        # 回退：尝试寻找第一个左大括号到匹配的右大括号组成的合法JSON
+        content = text.strip()
+        if "{" not in content or "}" not in content:
+            return None
 
-        return text[b + len(begin): e].strip()
+        # 粗暴地寻找一个可解析的JSON片段
+        opens: List[int] = [i for i, ch in enumerate(content) if ch == "{"]
+        closes: List[int] = [i for i, ch in enumerate(content) if ch == "}"]
+        if not opens or not closes:
+            return None
+
+        for start in opens:
+            for end_idx in reversed(closes):
+                if end_idx <= start:
+                    continue
+                candidate = content[start:end_idx + 1].strip()
+                try:
+                    json.loads(candidate)
+                    return candidate
+                except Exception:
+                    continue
+        return None
+    
+    def _parse_json_block(self, text: str) -> Optional[Dict[str, Any]]:
+        pass
+

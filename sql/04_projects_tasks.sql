@@ -22,7 +22,8 @@ CREATE TABLE tasks (
     project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
     workspace_id UUID REFERENCES workspaces(id) ON DELETE SET NULL,
     creator_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    assignee_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    assignee_id UUID REFERENCES users(id) ON DELETE SET NULL,   -- 默认给自己加
+    parent_task_id UUID REFERENCES tasks(id) ON DELETE CASCADE, -- 父任务ID
     title TEXT NOT NULL,
     description TEXT,
     status task_status DEFAULT 'backlog',
@@ -46,25 +47,6 @@ CREATE INDEX idx_tasks_assignee ON tasks(assignee_id);
 CREATE INDEX idx_tasks_status ON tasks(status);
 CREATE INDEX idx_tasks_workspace ON tasks(workspace_id);
 CREATE INDEX idx_tasks_due ON tasks(due_at);
-
--- 子任务（独立行或树形）
-CREATE TABLE subtasks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
-    parent_subtask_id UUID REFERENCES subtasks(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    description TEXT,
-    status task_status DEFAULT 'backlog',
-    assignee_id UUID REFERENCES users(id),
-    estimated_minutes INTEGER,
-    actual_minutes INTEGER DEFAULT 0,
-    due_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    deleted_at TIMESTAMP WITH TIME ZONE NULL
-);
-CREATE INDEX idx_subtasks_task ON subtasks(task_id);
-CREATE INDEX idx_subtasks_parent ON subtasks(parent_subtask_id);
 
 -- 任务依赖（任务 A 依赖于任务 B）
 CREATE TABLE task_dependencies (

@@ -15,9 +15,7 @@ import asyncio
 from typing import Dict, Any
 
 async def test_func():
-    config_redis: Dict[str, Any] = load_config(
-        r"G:\Codes\软件工程作业\backend\PyBackend\homework-soft-engi-backend\config.json"
-    )
+    config_redis: Dict[str, Any] = load_config()
     redisman: RedisManager = RedisManager(**config_redis["redis"])
 
     # 初始化连接池

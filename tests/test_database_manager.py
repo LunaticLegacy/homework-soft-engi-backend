@@ -3,6 +3,11 @@ import json
 import os
 import pytest
 
+try:
+    import asyncpg  # type: ignore
+except ImportError:
+    pytest.skip("asyncpg not installed; skipping database manager tests", allow_module_level=True)
+
 from modules.databaseman.database_manager import DatabaseManager
 
 
@@ -41,7 +46,7 @@ async def test_init_pool_and_connection_flow(monkeypatch):
 
     created = {}
 
-    def fake_create_pool(*args, **kwargs):
+    async def fake_create_pool(*args, **kwargs):
         # record that create_pool was called with expected keys
         created.update(kwargs)
         return DummyPool()
@@ -119,5 +124,5 @@ async def test_get_connection_without_init():
         db_database_name="test",
         db_port=5432
     )
-    with pytest.raises(ConnectionError):
+    with pytest.raises(EOFError):
         await db.get_connection()

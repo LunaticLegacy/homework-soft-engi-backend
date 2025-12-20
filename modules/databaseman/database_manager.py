@@ -72,7 +72,8 @@ class DatabaseManager:
     async def get_connection(self, timeout: float = 5.0) -> asyncpg.Connection:
         """
         从连接池获取一个连接。
-        - 在获取连接并使用完毕后，必须使用本实例内的`release_connection`函数释放连接。否则会造成连接泄漏（类似内存泄漏）。
+        - 在获取连接并使用完毕后，必须使用本实例内的`release_connection`函数释放连接。
+            否则会造成连接泄漏（类似内存泄漏）。
         
         注意：请在try块内使用，如果等待超时，该块会抛出`TimeoutError`。
 

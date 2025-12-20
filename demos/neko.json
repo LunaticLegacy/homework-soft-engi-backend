@@ -1,0 +1,122 @@
+{
+  "main_goal": "为现有猫娘形象（身高186cm，体重65kg，拥有可动猫耳猫尾）挑选合适服装，并创建及运营一个相关的自媒体账号。",
+  "tasks": [
+    {
+      "title": "完成猫娘形象打造与自媒体运营",
+      "description": "基于现有猫耳猫尾基础，完成个人猫娘形象的服装搭配，并以此形象为核心，创建并运营一个自媒体账号，分享内容并吸引关注。",
+      "estimated_time": 90,
+      "estimated_time_unit": "day",
+      "priority": "critical",
+      "subtasks": [
+        {
+          "title": "分析与确定个人猫娘服装方案",
+          "description": "根据身高186cm、体重65kg的瘦高体型，结合猫娘主题，挑选能扬长避短、突出特色并方便活动的日常或主题服装。",
+          "estimated_time": 14,
+          "estimated_time_unit": "day",
+          "priority": "high",
+          "subtasks": [
+            {
+              "title": "分析身材特点与风格需求",
+              "description": "记录肩宽、腰围、腿长等具体数据，研究各类猫娘（如赛博、古典、日常风）的常见穿搭，明确自己想要的风格方向（如休闲、华丽、酷飒）。",
+              "estimated_time": 2,
+              "estimated_time_unit": "day",
+              "priority": "high",
+              "subtasks": []
+            },
+            {
+              "title": "进行服装选购与搭配",
+              "description": "根据确定风格，在电商平台（如淘宝、特定COS店）寻找适合高个子男装的女性风格或中性风格服装，重点注意衣长、袖长是否合适，优先考虑有弹力、分层搭配的款式以修饰身形。",
+              "estimated_time": 7,
+              "estimated_time_unit": "day",
+              "priority": "high",
+              "subtasks": []
+            },
+            {
+              "title": "实物试穿与调整",
+              "description": "收到衣服后进行全面试穿，检查与猫耳猫尾的协调性、活动是否方便、拍摄效果如何。根据试穿结果决定保留、更换或增配配件（如手套、颈饰、假发）。",
+              "estimated_time": 5,
+              "estimated_time_unit": "day",
+              "priority": "medium",
+              "subtasks": []
+            }
+          ]
+        },
+        {
+          "title": "创建并启动猫娘主题自媒体账号",
+          "description": "从零开始创建一个以猫娘形象为核心的自媒体账号，完成基础建设并发布首批内容，确立账号调性。",
+          "estimated_time": 30,
+          "estimated_time_unit": "day",
+          "priority": "high",
+          "subtasks": [
+            {
+              "title": "确定平台与账号定位",
+              "description": "选择主要运营平台（如B站、抖音、小红书、Twitter），分析平台用户偏好。明确账号内容方向（如日常vlog、变装过程、猫娘文化探讨、趣味短片）和目标受众。",
+              "estimated_time": 3,
+              "estimated_time_unit": "day",
+              "priority": "high",
+              "subtasks": []
+            },
+            {
+              "title": "完成账号基础设置与视觉设计",
+              "description": "注册账号，构思并确定易记的账号名称。使用最终确定的猫娘形象拍摄或绘制头像、背景图，撰写一段吸引人的、突出猫娘特色的个人简介。",
+              "estimated_time": 2,
+              "estimated_time_unit": "day",
+              "priority": "high",
+              "subtasks": []
+            },
+            {
+              "title": "策划并制作发布首批内容",
+              "description": "制作3-5条高质量初始内容。例如：1. 形象亮相视频；2. 服装选择心得分享；3. 猫耳猫尾动态展示的趣味短片。确保视频剪辑、标题、标签（如#猫娘 #高个子cos）优化。",     
+              "estimated_time": 10,
+              "estimated_time_unit": "day",
+              "priority": "high",
+              "subtasks": []
+            }
+          ]
+        },
+        {
+          "title": "实施账号的持续运营与增长",
+          "description": "在账号启动后，进行定期内容更新、粉丝互动和数据分析，以稳步提升账号影响力和关注度。",
+          "estimated_time": 60,
+          "estimated_time_unit": "day",
+          "priority": "medium",
+          "subtasks": [
+            {
+              "title": "建立内容更新计划与素材库",
+              "description": "制定每周/每月的固定更新频率（如每周1-2更）。规划内容主题日历，并平时积累拍摄素材（生活片段、造型过程、想法记录）。",
+              "estimated_time": 5,
+              "estimated_time_unit": "day",
+              "priority": "medium",
+              "subtasks": []
+            },
+            {
+              "title": "进行日常互动与社区维护",
+              "description": "定期回复评论和私信，参与相关话题或挑战，关注和互动同领域创作者，加入相关社群，建立粉丝粘性。",
+              "estimated_time": 30,
+              "estimated_time_unit": "day",
+              "priority": "medium",
+              "subtasks": []
+            },
+            {
+              "title": "分析数据并优化策略",
+              "description": "每周查看平台后台数据，分析播放量、点赞、涨粉的关键来源和内容类型。根据数据反馈调整后续内容方向、发布时机和运营重点。",
+              "estimated_time": 15,
+              "estimated_time_unit": "day",
+              "priority": "low",
+              "subtasks": []
+            },
+            {
+              "title": "探索跨平台推广与合作机会",
+              "description": "将优质内容同步到其他社交平台引流。在有一定粉丝基础后，考虑与其他猫娘或动漫领域创作者进行联动合作。",
+              "estimated_time": 10,
+              "estimated_time_unit": "day",
+              "priority": "low",
+              "subtasks": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "summary": "您的计划分为形象打造与自媒体运营两大阶段。首先，请集中精力在两周内完成服装选购与定妆，这是所有内容创作的基础。随后，用一个月时间创建账号并发布首批高质量内容，树立鲜明形象。长 期来看，通过规律更新和积极互动实现账号的稳步增长。高个子猫娘是独特亮点，在内容中可巧妙展现此特色以脱颖而出。"
+}

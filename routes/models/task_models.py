@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from .base_models import BaseRequest, BaseResponse
 
+from services.models.task_data_model import *
 
 @dataclass
 class TaskCreateRequest(BaseRequest):
@@ -54,7 +55,7 @@ class TaskCreateResponse(BaseResponse):
 @dataclass
 class TaskListResponse(BaseResponse):
     status: str
-    data: List[Dict[str, Any]]
+    data: List[TaskTree]
     count: int
 
 @dataclass

@@ -2,7 +2,7 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletion
 
 import asyncio
-from typing import Callable, Optional, AsyncGenerator
+from typing import Callable, Optional, AsyncGenerator, List, Dict
 
 class LLMFetcher:
     def __init__(
@@ -66,6 +66,7 @@ class LLMFetcher:
     async def fetch_stream(
         self,
         msg: str,
+        prev_messages: Optional[List[Dict[str, str]]] = None,
         system_prompt: Optional[str] = None,
         temperature: float = 0.4,
         max_tokens: int = 4096,
@@ -81,6 +82,7 @@ class LLMFetcher:
 
         Args:
             msg (str): 你要给LLM发送的信息。
+            prev_messages (Optional[List[Dict[str, str]]]): LLM的历史上下文。
             system_prompt (str): 系统提示词。
             temperature (float): 当前温度。
             max_tokens (int): 最大token数量。
@@ -88,13 +90,22 @@ class LLMFetcher:
         """
         if not system_prompt:
             system_prompt = ""
+        
+        messages: List[Dict[str, str]] = [{"role": "system", "content": system_prompt}]
+
+        # 关键：把历史塞进来
+        if prev_messages:
+            # 防御：过滤掉非 role/content
+            for m in prev_messages:
+                if "role" in m and "content" in m:
+                    messages.append({"role": m["role"], "content": m["content"]})
+
+        # 再放本轮用户输入
+        messages.append({"role": "user", "content": msg})
 
         response = self.context.chat.completions.create(
             model=self.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": msg},
-            ],
+            messages=messages,
             max_tokens=max_tokens,
             temperature=temperature,
             stream=True,

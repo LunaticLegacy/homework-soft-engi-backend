@@ -1,0 +1,229 @@
+{
+  "main_goal": "在现实中打扮成猫娘形象（男生出女仆猫娘），以外观为主，明天参加学院动漫社女仆祭并顺利出席",
+  "tasks": [
+    {
+      "title": "完成猫娘女仆出装的全流程准备并参加女仆祭",
+      "description": "以“外观还原+舒适安全+活动当天不翻车”为完成标准：服装配件齐全、妆发稳定、行动自如、携带应急包、到场后形象一致且不影响活动规则（默认你需要在明天活动开始前完成全部准备）。",
+      "estimated_time": 1,
+      "estimated_time_unit": "day",
+      "priority": "critical",
+      "subtasks": [
+        {
+          "title": "确认活动要求与个人出装边界",
+          "description": "在动漫社公告/群聊/海报中确认：集合时间、服装风格是否限制（女仆/女装是否OK）、是否需要报名或编号、现场更衣点/储物点、是否允许携带道具（猫尾/小铃铛/托盘等）、妆容是否有禁忌（过于夸张/面具）。若找不到信息，按“校园公共场合友好、行动安全、不过度暴露”为默认边界。",
+          "estimated_time": 20,
+          "estimated_time_unit": "minute",
+          "priority": "critical",
+          "subtasks": [
+            {
+              "title": "整理明天时间线",
+              "description": "写下明天的硬时间点：起床、洗漱、上妆、穿戴、出门、到场缓冲（建议预留至少30分钟缓冲）。把最容易超时的环节（贴假睫毛/戴假发/系束腰）放到最前面练一次。",
+              "estimated_time": 15,
+              "estimated_time_unit": "minute",
+              "priority": "high",
+              "subtasks": []
+            },
+            {
+              "title": "确定拍照与社交策略",
+              "description": "提前想好一句自我介绍和拍照回应：例如“可以呀，但我先整理一下耳朵/尾巴喵”。同时设定个人边界：不接受触碰耳朵尾巴、需要先征求同意再近距离拍摄等，避免现场尴尬。",
+              "estimated_time": 10,
+              "estimated_time_unit": "minute",
+              "priority": "medium",
+              "subtasks": []
+            }
+          ]
+        },
+        {
+          "title": "确定造型方案与购物/借用清单",
+          "description": "确定一个低风险、易落地的猫娘女仆方案：女仆裙（或女仆上衣+短裙）、围裙、头饰、猫耳、猫尾、项圈或铃铛、丝袜/过膝袜、鞋（玛丽珍/小皮鞋/厚底乐福），再加一个统一配色（黑白经典或粉白可爱）。完成标准：列出缺什么、从哪里拿到、今晚能否到手。",
+          "estimated_time": 45,
+          "estimated_time_unit": "minute",
+          "priority": "critical",
+          "subtasks": [
+            {
+              "title": "选择“保守但显猫娘”的配色与细节",
+              "description": "默认建议黑白主色 + 一个点缀色（粉/红/蓝选一）：点缀用在蝴蝶结、指甲、眼影或领结上。这样即使配件不齐也不会显乱。",
+              "estimated_time": 15,
+              "estimated_time_unit": "minute",
+              "priority": "high",
+              "subtasks": []
+            },
+            {
+              "title": "列出最小可行套装与升级套装",
+              "description": "最小可行：女仆裙/上衣裙 + 围裙 + 猫耳 + 长袜 + 鞋。升级：假发、猫尾、铃铛项圈、手袖/蕾丝发箍、小托盘/小扫帚道具。优先保证最小可行套装在今晚落实。",
+              "estimated_time": 20,
+              "estimated_time_unit": "minute",
+              "priority": "critical",
+              "subtasks": []
+            },
+            {
+              "title": "准备舒适与安全的打底",
+              "description": "准备打底短裤/安全裤、肤色或黑色打底袜、隐形肩带或固定带（如需要），并确保不会勒到影响呼吸或走路。避免使用强粘胶直接贴皮肤来“塑形”，以免过敏或撕伤。",
+              "estimated_time": 15,
+              "estimated_time_unit": "minute",
+              "priority": "high",
+              "subtasks": []
+            }
+          ]
+        },
+        {
+          "title": "服装与配件到位并完成试穿调试",
+          "description": "把所有衣物配件实物摆出来，逐件试穿，调整到“走路、抬手、坐下、上下楼都没问题”。完成标准：无明显走光风险、配件不易掉、口袋/收纳方案明确（手机、钥匙、卡）。",
+          "estimated_time": 2,
+          "estimated_time_unit": "hour",
+          "priority": "critical",
+          "subtasks": [
+            {
+              "title": "试穿并记录“穿戴顺序”",
+              "description": "从里到外试一次：打底→袜→裙/上衣→围裙→头饰→耳朵→尾巴→项圈→鞋。把最容易卡住的步骤写下来，明天按顺序执行以节省时间。",
+              "estimated_time": 30,
+              "estimated_time_unit": "minute",
+              "priority": "high",
+              "subtasks": []
+            },
+            {
+              "title": "固定猫耳与猫尾",
+              "description": "猫耳优先选发箍式；若假发上固定，用小夹子+U形夹增强牢固。猫尾优先腰带/别针式，测试是否会拉扯衣物、坐下是否硌。完成标准：甩头、快走10米不掉。",
+              "estimated_time": 25,
+              "estimated_time_unit": "minute",
+              "priority": "high",
+              "subtasks": []
+            },
+            {
+              "title": "鞋袜行走测试",
+              "description": "穿上鞋袜在室内走动5分钟，模拟上楼梯、转身、蹲下捡东西。若磨脚，立刻准备创可贴/防磨贴或换鞋。",
+              "estimated_time": 20,
+              "estimated_time_unit": "minute",
+              "priority": "high",
+              "subtasks": []
+            },
+            {
+              "title": "快速补救方案",
+              "description": "为每个关键部件准备Plan B：围裙带断了用别针；耳朵松了用备用发夹；裙摆太短用更长的打底短裤；项圈太紧直接不用。完成标准：每个问题有一个不需要求人的替代方案。",
+              "estimated_time": 25,
+              "estimated_time_unit": "minute",
+              "priority": "medium",
+              "subtasks": []
+            }
+          ]
+        },
+        {
+          "title": "妆容与发型准备（以“猫感”而非浓妆为主）",
+          "description": "目标是“远看也像猫娘女仆、近看干净不脏妆”。完成标准：底妆均匀、眼妆提神、腮红与鼻尖有猫感、唇色自然、整体不易脱妆；如戴假发则发网与假发固定稳。",
+          "estimated_time": 2,
+          "estimated_time_unit": "hour",
+          "priority": "high",
+          "subtasks": [
+            {
+              "title": "准备化妆与护肤基础",
+              "description": "今晚把工具凑齐：洁面、保湿、妆前/防晒、粉底或气垫、遮瑕、散粉、眉笔、眼线、睫毛膏、腮红、唇釉/润唇、卸妆品。缺啥就用“更少步骤但更稳”的替代（例如只用气垫+散粉+眉+眼线+腮红）。",
+              "estimated_time": 25,
+              "estimated_time_unit": "minute",
+              "priority": "high",
+              "subtasks": []
+            },
+            {
+              "title": "猫娘重点：眼线、鼻尖、腮红与小胡须点",
+              "description": "眼线略拉长眼尾让眼睛更“猫”；鼻尖用腮红轻扫一点增加可爱感；腮红位置略高一点；如你接受，可用棕色/灰色眼线笔在两侧脸颊点2-3个“胡须点”，比画整条胡须更日常也更不翻车。",
+              "estimated_time": 30,
+              "estimated_time_unit": "minute",
+              "priority": "high",
+              "subtasks": []
+            },
+            {
+              "title": "假发与发网固定练习",
+              "description": "如果用假发：先戴发网压平头发，再戴假发，前额位置对齐眉上方自然发际线；用发夹在太阳穴两侧与后脑固定。完成标准：低头抬头不滑、耳朵不会顶歪假发。",
+              "estimated_time": 30,
+              "estimated_time_unit": "minute",
+              "priority": "medium",
+              "subtasks": []
+            },
+            {
+              "title": "定妆与补妆策略",
+              "description": "散粉重点按压T区与眼下；准备一包纸巾/吸油纸+小散粉或粉饼，明天到场后补一次，拍照前快速按压即可。",
+              "estimated_time": 20,
+              "estimated_time_unit": "minute",
+              "priority": "high",
+              "subtasks": []
+            }
+          ]
+        },
+        {
+          "title": "打包应急包与出行准备",
+          "description": "把明天可能翻车的点提前装进包里，减少现场求助。完成标准：一个小袋子/化妆包内含关键修复物品；路线与到场方式明确；到场前能在洗手间完成最后整理。",
+          "estimated_time": 45,
+          "estimated_time_unit": "minute",
+          "priority": "high",
+          "subtasks": [
+            {
+              "title": "应急包清单打包",
+              "description": "至少包含：备用发夹/别针/小橡皮筋、双面胶或服装胶带（贴衣物不贴皮肤）、迷你散粉/粉饼、棉签、纸巾/湿巾、创可贴、防磨贴、小梳子、备用口罩（如果需要）。",
+              "estimated_time": 20,
+              "estimated_time_unit": "minute",
+              "priority": "high",
+              "subtasks": []
+            },
+            {
+              "title": "衣物运输与防皱",
+              "description": "若明天现场更衣：衣服用防尘袋或大袋子装好，围裙和头饰放硬一点的夹层防压。若穿去现场：提前挂一晚、明早用蒸汽/热风远距离处理皱褶。",
+              "estimated_time": 15,
+              "estimated_time_unit": "minute",
+              "priority": "medium",
+              "subtasks": []
+            },
+            {
+              "title": "确认明天出门路线与到场缓冲",
+              "description": "定好从宿舍/家到活动地点的路线，预留至少30分钟冗余；同时规划一个“中途补妆点”（厕所/更衣室）。",
+              "estimated_time": 10,
+              "estimated_time_unit": "minute",
+              "priority": "high",
+              "subtasks": []
+            }
+          ]
+        },
+        {
+          "title": "明天执行：快速上妆穿戴、到场整理与现场保持",
+          "description": "按昨晚写好的穿戴顺序完成上妆与穿戴，到场后进行一次总检查，活动中保持形象一致但不影响行动。完成标准：准时到场、形象稳定、拍照与互动不慌乱，你的口癖“喵”自然融入即可。",
+          "estimated_time": 3,
+          "estimated_time_unit": "hour",
+          "priority": "critical",
+          "subtasks": [
+            {
+              "title": "出门前5分钟总检查",
+              "description": "镜前检查：耳朵/尾巴是否牢固、围裙是否对称、裙摆与打底是否安全、鞋是否舒适、随身物品是否齐全（手机/卡/钥匙/应急包）。拍一张全身照自检整体比例与配色是否统一。",
+              "estimated_time": 10,
+              "estimated_time_unit": "minute",
+              "priority": "critical",
+              "subtasks": []
+            },
+            {
+              "title": "到场后“补妆+固定”一次",
+              "description": "到洗手间：按压吸油→补散粉→检查眼线与鼻尖腮红→重新夹紧耳朵/整理假发→调整尾巴位置。完成标准：拍照近距离也看不出明显脱妆或歪斜。",
+              "estimated_time": 15,
+              "estimated_time_unit": "minute",
+              "priority": "high",
+              "subtasks": []
+            },
+            {
+              "title": "现场保持与拍照姿势模板",
+              "description": "准备3个简单姿势：双手放胸前比心/捧脸；一手轻扶围裙蝴蝶结；微侧身+脚尖内扣一点点。配合一句轻松台词即可，不需要刻意演戏。",
+              "estimated_time": 15,
+              "estimated_time_unit": "minute",
+              "priority": "medium",
+              "subtasks": []
+            },
+            {
+              "title": "结束后卸妆与衣物整理",
+              "description": "回去后先卸妆再洗脸保湿，检查皮肤是否有过敏点；衣物配件分类收纳，耳朵尾巴擦拭后放回盒子，避免变形。",
+              "estimated_time": 30,
+              "estimated_time_unit": "minute",
+              "priority": "medium",
+              "subtasks": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "summary": "你要做的是把猫娘女仆形象落到“能准时出门、到场不翻车”的可执行流程上：先确认规则与时间线，再保证最小可行套装今晚到位并完成试穿固定。接着用简洁稳定的猫感妆容（眼线+鼻尖/腮红+少量点缀）提升辨识度，并打包应急包兜底。明天按固定顺序快速上妆穿戴，到场补一次妆和配件就能稳定发挥。"
+}

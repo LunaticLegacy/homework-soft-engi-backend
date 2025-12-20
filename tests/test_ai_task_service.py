@@ -1,6 +1,12 @@
 import pytest
 import asyncio
 from unittest.mock import Mock, patch
+
+try:
+    import asyncpg  # type: ignore
+except ImportError:
+    pytest.skip("asyncpg not installed; skipping ai task service tests", allow_module_level=True)
+
 from services.ai_task_service import AITaskService
 
 @pytest.fixture

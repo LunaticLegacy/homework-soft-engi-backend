@@ -6,12 +6,12 @@ import json
 from core.database import get_db_manager
 from core.llm_service import get_llm_fetcher
 
-from core.utils.getters import get_ai_service, get_redis_manager
+from core.utils.getters import get_ai_service, get_redis_manager, get_task_service
 from core.utils.user_id_fetch import get_user_id_from_redis_by_token
 
 from modules import LLMFetcher, DatabaseManager
 from modules.redisman import RedisManager
-from services import AITaskService
+from services import AITaskService, TaskService
 from core.config import load_config
 
 from core.exceptions import DatabaseConnectionError, DatabaseTimeoutError
@@ -174,6 +174,7 @@ async def chat_with_ai_stream(
     llm_fetcher: LLMFetcher = Depends(get_llm_fetcher),
     service: AITaskService = Depends(get_ai_service),
     redis_man: RedisManager = Depends(get_redis_manager),
+    task_man: TaskService = Depends(get_task_service),
     database: DatabaseManager = Depends(get_db_manager)
 ):
     """
@@ -203,20 +204,6 @@ async def chat_with_ai_stream(
 
         # 从redis里获取上下文，现在这个东西仅仅是一个作用在内存系统中的东西。
         history: List = await redis_man.get(history_key) or []
-
-        db = await database.get_connection(5.0)
-
-        # 中间这里规划是要写入SQL的。
-
-        # context = await db.fetchrow(
-        #     """
-        #     SELECT ()
-        #     FROM projects
-        #     """,
-        # )
-        await database.release_connection(db)
-
-        await redis_man.delete(history_key)
         
         # 准备消息历史
         messages = []
@@ -231,8 +218,9 @@ async def chat_with_ai_stream(
             full_response = ""
             async for chunk in llm_fetcher.fetch_stream(
                 msg=request.message,
+                prev_messages=messages,
                 system_prompt=system_prompt,
-                temperature=0.7,
+                temperature=0.725,
                 max_tokens=4096,
                 output_reasoning=True
             ):
@@ -246,6 +234,16 @@ async def chat_with_ai_stream(
             print("Now hisotries:", len(history))
 
             json_msg: Optional[str] = service._extract_json_block(full_response)
+
+            # 如果可以出JSON，则将其解析并按照任务主表分解
+            if json_msg:
+                nonlocal user_id
+                await task_man.create_task_by_json(
+                    project_id=request.project_id,
+                    workspace_id=request.workspace_id,
+                    creator_id=user_id,
+                    json_message=json_msg
+                )
             
             # 只保留最近10轮对话
             if len(history) > 20:  # 10轮对话包含用户和助手的消息

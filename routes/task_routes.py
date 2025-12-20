@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 from datetime import datetime, timedelta, UTC
 
@@ -26,6 +26,8 @@ from routes.models.task_models import (
     TaskDeleteResponse,
 )
 
+from services.models.task_data_model import *
+
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -48,6 +50,7 @@ async def create_task(
             request.workspace_id,
             user_id,
             request.title,
+            None,
             request.description,
             request.assignee_id,
             request.priority,
@@ -70,18 +73,28 @@ async def list_tasks(
     svc: TaskService = Depends(get_task_service)
 ):
     try:
-        data = await svc.list_tasks(request.workspace_id, request.project_id)
+        # TODO: 将这里的逻辑精简掉——我不需要这个地方的任务。
+        # 我需要获取到本项目持有的所有总任务，并通过核心任务获取其全部子任务。
+        # - 注意：“总任务”是没有父任务标签的。
+        data: List[Task] = await svc.list_root_tasks(request.workspace_id, request.project_id)
+
+        tree: List[TaskTree] = []
+        for d in data:
+            t: Optional[TaskTree] = await svc.get_task_tree(d.id)
+            if t is None:
+                raise ValueError("Task not found.")
+            tree.append(t)
 
         now: datetime = datetime.now(UTC)
         return {
-            "status": "success", "data": data, 
+            "status": "success", "data": tree, 
             "count": len(data), "time": str(now)
             }
     except (DatabaseConnectionError, DatabaseTimeoutError) as exc:
         raise HTTPException(status_code=503 if isinstance(exc, DatabaseConnectionError) else 408, detail=str(exc))
 
 
-@router.post("/{task_id}/get", response_model=TaskGetResponse)
+@router.post("/{task_id}/get/", response_model=TaskGetResponse)
 async def get_task(
     task_id: str, 
     svc: TaskService = Depends(get_task_service)
@@ -100,7 +113,7 @@ async def get_task(
         raise HTTPException(status_code=503 if isinstance(exc, DatabaseConnectionError) else 408, detail=str(exc))
 
 
-@router.put("/{task_id}/", response_model=Dict[str, Any])
+@router.post("/{task_id}/update/", response_model=Dict[str, Any])
 async def update_task(
     task_id: str, 
     request: TaskUpdateRequest, 
