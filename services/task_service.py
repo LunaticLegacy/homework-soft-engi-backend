@@ -70,10 +70,27 @@ class TaskService:
         Notes:
             输入的JSON格式见提示词部分。
         """
-        cleaned_message = self._normalize_json_message(json_message)
-        if not cleaned_message:
-            # 没有可解析的内容，直接跳过。
+        # 增加对json_message的严格检查
+        if not json_message:
+            print("Warning: Empty JSON message provided to create_task_by_json")
             return None
+            
+        if not isinstance(json_message, str):
+            print(f"Warning: Invalid JSON message type provided to create_task_by_json: {type(json_message)}")
+            return None
+            
+        cleaned_message = self._normalize_json_message(json_message)
+        if not cleaned_message or not cleaned_message.strip():
+            # 没有可解析的内容，直接跳过。
+            print("Warning: No valid content found in JSON message after normalization")
+            return None
+            
+        # 确保清理后的消息是非空的
+        cleaned_message = cleaned_message.strip()
+        if not cleaned_message:
+            print("Warning: Cleaned JSON message is empty")
+            return None
+            
         try:
             payload: Dict[str, Any] = json.loads(cleaned_message)
         except json.JSONDecodeError as exc:

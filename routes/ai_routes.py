@@ -236,14 +236,23 @@ async def chat_with_ai_stream(
             json_msg: Optional[str] = service._extract_json_block(full_response)
 
             # 如果可以出JSON，则将其解析并按照任务主表分解
-            if json_msg:
+            # 强化检查：确保json_msg不仅存在且去除空格后非空
+            if json_msg and isinstance(json_msg, str) and json_msg.strip():
                 nonlocal user_id
-                await task_man.create_task_by_json(
-                    project_id=request.project_id,
-                    workspace_id=request.workspace_id,
-                    creator_id=user_id,
-                    json_message=json_msg
-                )
+                # 进一步确保要解析的JSON内容有效
+                cleaned_json_msg = json_msg.strip()
+                if cleaned_json_msg:  # 再次确认非空
+                    try:
+                        await task_man.create_task_by_json(
+                            project_id=request.project_id,
+                            workspace_id=request.workspace_id,
+                            creator_id=user_id,
+                            json_message=cleaned_json_msg  # 使用清理后的JSON消息
+                        )
+                    except ValueError as e:
+                        # 记录JSON解析错误但不中断流程
+                        print(f"Warning: Failed to parse AI-generated JSON: {e}")
+            # 如果没有有效的JSON消息，则跳过任务创建步骤
             
             # 只保留最近10轮对话
             if len(history) > 20:  # 10轮对话包含用户和助手的消息

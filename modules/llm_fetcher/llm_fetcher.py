@@ -73,7 +73,7 @@ class LLMFetcher:
         output_reasoning: bool = False
     ) -> AsyncGenerator[str, None]:
         """
-        流式对话方法。使用方法：
+        流式对话方法。使用示例：
         ```
         llm = LLMFetcher("your_key", "your_api")
         async with llm.fetch_stream("早安喵") as chunk:
@@ -134,7 +134,7 @@ class LLMFetcher:
 async def chat_test():
     llm = LLMFetcher(
         api_url="https://api.deepseek.com",
-        api_key="sk-9a190d5d23604684a75fb8b522733f44",
+        api_key="sk-9a190d5d23604684a75fb8b522733f44",  # 这个key已经废弃了
         model="deepseek-reasoner",
     )
 

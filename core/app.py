@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from core.middleware import log_requests, error_handler
 from core.exceptions import register_exception_handlers
 import asyncio
+import os
 
 
 @asynccontextmanager
@@ -17,6 +18,11 @@ async def lifespan(app: FastAPI):
     try:
         from core.database import db_manager
         from core.redis_cache import redis_manager
+        
+        # 在多进程环境中，每个worker都需要独立的连接池
+        worker_id = os.getpid()
+        print(f"Initializing connections for worker {worker_id}")
+        
         await db_manager.init_pool()
         await redis_manager.init_pool()
         redis_connection: bool = await redis_manager.ping()
@@ -49,6 +55,7 @@ async def lifespan(app: FastAPI):
             print("Redis connections closed successfully.")
 
         except Exception as e:
+            print(f"Error during cleanup: {e}")
             pass
 
 def create_app() -> FastAPI:

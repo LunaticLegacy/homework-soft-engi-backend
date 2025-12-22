@@ -18,6 +18,9 @@ if __name__ == "__main__":
     ssl_keyfile = config.ssl.keyfile
     ssl_certfile = config.ssl.certfile
     
+    # 检查是否指定workers数量
+    workers = getattr(config.server, 'workers', 1)
+    
     # 运行应用
     if ssl_keyfile and ssl_certfile:
         # 如果有证书，则运行https
@@ -26,8 +29,13 @@ if __name__ == "__main__":
             "app:app", 
             ssl_keyfile=ssl_keyfile,
             ssl_certfile=ssl_certfile,
+            workers=workers,  # 添加workers参数
             **server_config
         )
     else:   # 否则http
         print("---- Server runs in HTTP mode ----")
-        uvicorn.run("app:app", **server_config)
+        uvicorn.run(
+            "app:app", 
+            workers=workers,  # 添加workers参数
+            **server_config
+        )
