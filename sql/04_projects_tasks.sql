@@ -63,7 +63,7 @@ CREATE TABLE task_activity_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id),
-    action TEXT NOT NULL, -- 'status_change','comment','assign','update' 等
+    action TEXT NOT NULL, -- 'status_change','assign','update' 等
     metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );

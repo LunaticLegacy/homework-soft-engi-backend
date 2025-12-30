@@ -86,11 +86,6 @@ def create_app() -> FastAPI:
     from routes.workspace_routes import router as workspace_router
     from routes.project_routes import router as project_router
     from routes.task_routes import router as task_router
-    from routes.tag_routes import router as tag_router
-    from routes.comment_routes import router as comment_router
-    from routes.attachment_routes import router as attachment_router
-    from routes.notification_routes import router as notification_router
-    from routes.search_routes import router as search_router
     from api.v1.routes import router as api_v1_router
     
     app.include_router(main_router)
@@ -99,11 +94,6 @@ def create_app() -> FastAPI:
     app.include_router(workspace_router)
     app.include_router(project_router)
     app.include_router(task_router)
-    app.include_router(tag_router)
-    app.include_router(comment_router)
-    app.include_router(attachment_router)
-    app.include_router(notification_router)
-    app.include_router(search_router)
     app.include_router(api_v1_router)
     
     return app
