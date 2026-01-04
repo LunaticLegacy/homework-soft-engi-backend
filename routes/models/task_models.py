@@ -15,6 +15,7 @@ class TaskCreateRequest(BaseRequest):
     description: Optional[str] = None
     assignee_id: Optional[str] = None
     priority: str = "medium"
+    parent_task_id: Optional[str]   # 计划加入这个。以及，计划将时间改为单位。
     estimated_minutes: Optional[int] = None
     due_at: Optional[str] = None
 

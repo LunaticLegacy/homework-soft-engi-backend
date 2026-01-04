@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from dataclasses import dataclass
 
 from .base_models import BaseRequest, BaseResponse
+from .ai_llm_models import LLMContext
 
 @dataclass
 class ProjectCreateRequest(BaseRequest):
@@ -38,6 +39,11 @@ class ProjectDeleteRequest(BaseRequest):
     archived: Optional[bool] = None
 
 @dataclass
+class ProjectLLMContextRequest(BaseRequest):
+    workspace_id: str
+    project_id: str
+
+@dataclass
 class ProjectCreateResponse(BaseResponse):
     status: str
     data: Dict[str, Any]
@@ -64,4 +70,8 @@ class ProjectUpdateResponse(BaseResponse):
 class ProjectDeleteResponse(BaseResponse):
     status: str
     message: str
+
+@dataclass
+class ProjectLLMContextResponse(BaseResponse):
+    contexts: List[LLMContext]
 

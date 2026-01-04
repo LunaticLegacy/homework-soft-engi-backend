@@ -1,4 +1,4 @@
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 from modules.llm_fetcher.llm_fetcher import LLMFetcher
 from modules.databaseman import DatabaseManager, DBTimeoutError
 from core.exceptions import DatabaseConnectionError, DatabaseTimeoutError
@@ -6,7 +6,7 @@ from settings import get_settings
 import json
 import uuid
 from datetime import datetime
-
+from routes.models.ai_llm_models import LLMContext  # 上下文内容
 
 class AITaskService:
     """AI任务分解服务类，处理基于AI的任务分解逻辑（流式收集JSON后解析）。"""
@@ -300,6 +300,113 @@ class AITaskService:
                     continue
         return None
     
-    def _parse_json_block(self, text: str) -> Optional[Dict[str, Any]]:
-        pass
+    async def save_context(
+        self,
+        workspace_id: str,
+        project_id: str,
+        user_id: str,
+        context_msg: Tuple[LLMContext, LLMContext],  # 用户消息和AI回复
+        previous_msg_id: Optional[str] = None
+    ) -> Optional[str]:
+        """
+        储存特定工作空间、特定项目、特定用户的AI LLM上下文。
+        Args:
+            workspace_id: 工作空间ID。
+            project_id: 项目ID。
+            user_id: 用户ID。
+            context_msg: 本片段内容。这个Tuple的长度为2，为保存用户输入和LLM输出。
+            previous_msg_id: 上一段对话的ID。
+        Returns:
+            str: 返回新创建的对话ID
+        """
+        try:
+            conn = await self.db_manager.get_connection(5.0)
+            try:
+                # 创建对话记录
+                conversation_row = await conn.fetchrow(
+                    """
+                    INSERT INTO ai_conversations 
+                    (project_id, workspace_id, creator_id, previous_conversation_id, model_name) 
+                    VALUES ($1, $2, $3, $4, $5)
+                    RETURNING id
+                    """,
+                    project_id, workspace_id, user_id, previous_msg_id, self.llm_fetcher.model
+                )
+                
+                if not conversation_row:
+                    raise Exception("创建对话记录失败")
+
+                # 保存对话ID内容，用于创建子内容。
+                conversation_id = conversation_row['id']
+                
+                # 保存用户消息 - 暂时将token写为0，作为占位符。
+                user_msg = context_msg[0]
+                await conn.execute(
+                    """
+                    INSERT INTO ai_messages 
+                    (conversation_id, role, content, tokens, sequence_number) 
+                    VALUES ($1, $2, $3, $4, $5)
+                    """,
+                    conversation_id, user_msg.role, user_msg.content, 0, 1
+                )
+                
+                # 保存AI回复
+                ai_msg = context_msg[1]
+                await conn.execute(
+                    """
+                    INSERT INTO ai_messages 
+                    (conversation_id, role, content, tokens, sequence_number) 
+                    VALUES ($1, $2, $3, $4, $5)
+                    """,
+                    conversation_id, ai_msg.role, ai_msg.content, 0, 2
+                )
+                
+                return str(conversation_id)
+
+            finally:
+                await self.db_manager.release_connection(conn)
+        except Exception as exc:
+            raise Exception(f"存储AI对话上下文失败: {str(exc)}")
+
+    async def get_context(
+        self,
+        workspace_id: str,
+        project_id: str,
+        user_id: str
+    ) -> List[LLMContext]:
+        """
+        获取特定工作空间、特定项目、特定用户的AI LLM上下文全文内容。
+        """
+        try:
+            conn = await self.db_manager.get_connection(5.0)
+            try:
+                # 获取与指定用户、项目和工作空间相关的所有对话及消息
+                rows = await conn.fetch(
+                    """
+                    SELECT am.role, am.content, am.tokens
+                    FROM ai_messages am
+                    JOIN ai_conversations ac ON am.conversation_id = ac.id
+                    WHERE ac.project_id = $1 
+                      AND ac.workspace_id = $2 
+                      AND ac.creator_id = $3
+                      AND ac.deleted_at IS NULL
+                    ORDER BY ac.created_at, am.sequence_number
+                    """,
+                    project_id, workspace_id, user_id
+                )
+                
+                # 将查询结果转换为 LLMContext 列表
+                context_list: List[LLMContext] = []
+                for row in rows:
+                    context_list.append(LLMContext(
+                        role=row['role'],
+                        content=row['content'],
+                    ))
+                
+                return context_list
+
+            finally:
+                await self.db_manager.release_connection(conn)
+        except Exception as exc:
+            raise Exception(f"读取AI对话上下文失败: {str(exc)}")
 

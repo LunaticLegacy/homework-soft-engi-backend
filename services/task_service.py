@@ -29,15 +29,29 @@ class TaskService:
         ) -> Optional[Task]:
         """
         创建单个任务。
+        Args:
+            project_id: 项目ID。
+            workspace_id: 工作空间ID。
+            creator_id: 用户ID。
+            title: 任务标题。
+            parent_task_id: 上级任务ID，可选。
+            description: 任务描述。
+            assignee_id: 任务分配人。（是否要实现这个？）
+            priority: 优先级。
+            estimated_minutes: 预估分钟。
+            due_at: 结束时间。
         """
         try:
             conn = await self.db.get_connection(5.0)
             try:
                 row = await conn.fetchrow(
                     """
-                    INSERT INTO tasks (project_id, workspace_id, creator_id, assignee_id, title, description, priority, estimated_minutes, due_at, parent_task_id)
-                    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-                    RETURNING id, project_id, workspace_id, creator_id, assignee_id, title, description, status, priority, estimated_minutes, due_at, created_at, updated_at
+                    INSERT INTO tasks 
+                    (project_id, workspace_id, creator_id, assignee_id, title, description, priority, estimated_minutes, due_at, parent_task_id)
+                    VALUES 
+                    ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+                    RETURNING 
+                    id, project_id, workspace_id, creator_id, assignee_id, title, description, status, priority, estimated_minutes, due_at, created_at, updated_at
                     """,
                     project_id, workspace_id, creator_id, assignee_id, title, description, priority, estimated_minutes, due_at, parent_task_id
                 )
@@ -59,8 +73,9 @@ class TaskService:
             json_message: str
     ) -> Optional[Task]:
         """
-        基于任务分解结果的JSON创建任务。        
-        
+        基于JSON创建任务。
+        - 最开始写这个函数是为了解析来自LLM的JSON文件，但现在看上去，我需要用这个函数解决来自用户的任务JSON。
+
         Args:
             project_id (str): 当前工程ID。
             workspace_id (str): 当前工作空间ID
@@ -90,7 +105,8 @@ class TaskService:
         if not cleaned_message:
             print("Warning: Cleaned JSON message is empty")
             return None
-            
+        
+        # 开始在JSON中加入内容。
         try:
             payload: Dict[str, Any] = json.loads(cleaned_message)
         except json.JSONDecodeError as exc:
@@ -111,7 +127,7 @@ class TaskService:
             conn = await self.db.get_connection(5.0)
             try:
                 async with conn.transaction():
-                    created_tree: Optional[Task] = await self._recursive_create_tasks(
+                    created_tree: Optional[TaskTree] = await self._recursive_create_tasks(
                         task_info=maintask,
                         project_id=project_id,
                         workspace_id=workspace_id,
@@ -119,7 +135,7 @@ class TaskService:
                         parent_task_id=None,
                         conn=conn
                     )
-                return created_tree
+                return created_tree.task if created_tree else None  # 返回TaskTree中的Task对象
             
             finally:
                 await self.db.release_connection(conn)

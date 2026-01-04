@@ -121,3 +121,9 @@ class AITaskSuggestionRecord:
     accepted: bool
     rejected: bool
     created_at: str
+
+@dataclass
+class LLMContext:
+    role: str
+    content: str
+

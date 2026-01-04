@@ -4,6 +4,8 @@ from openai.types.chat import ChatCompletion
 import asyncio
 from typing import Callable, Optional, AsyncGenerator, List, Dict
 
+from routes.models.ai_llm_models import LLMContext  # 上下文内容
+
 class LLMFetcher:
     def __init__(
         self,
@@ -66,7 +68,7 @@ class LLMFetcher:
     async def fetch_stream(
         self,
         msg: str,
-        prev_messages: Optional[List[Dict[str, str]]] = None,
+        prev_messages: Optional[List[LLMContext]] = None,
         system_prompt: Optional[str] = None,
         temperature: float = 0.4,
         max_tokens: int = 4096,
@@ -81,31 +83,30 @@ class LLMFetcher:
         ```
 
         Args:
-            msg (str): 你要给LLM发送的信息。
-            prev_messages (Optional[List[Dict[str, str]]]): LLM的历史上下文。
-            system_prompt (str): 系统提示词。
-            temperature (float): 当前温度。
-            max_tokens (int): 最大token数量。
-            output_reasoning (bool): 是否输出正在思考的内容。
+            msg=: 你要给LLM发送的信息。
+            prev_messages: LLM的历史上下文。
+            system_prompt: 系统提示词。
+            temperature: 当前温度。
+            max_tokens: 最大token数量。
+            output_reasoning: 是否输出正在思考的内容。
         """
         if not system_prompt:
             system_prompt = ""
         
-        messages: List[Dict[str, str]] = [{"role": "system", "content": system_prompt}]
+        messages: List[LLMContext] = [LLMContext("system", system_prompt)]
 
         # 关键：把历史塞进来
         if prev_messages:
             # 防御：过滤掉非 role/content
             for m in prev_messages:
-                if "role" in m and "content" in m:
-                    messages.append({"role": m["role"], "content": m["content"]})
+                messages.append(LLMContext(m.role, m.content))
 
         # 再放本轮用户输入
-        messages.append({"role": "user", "content": msg})
+        messages.append(LLMContext("user", msg))
 
         response = self.context.chat.completions.create(
             model=self.model,
-            messages=messages,
+            messages=[{"role": m.role, "content": m.content} for m in messages],
             max_tokens=max_tokens,
             temperature=temperature,
             stream=True,

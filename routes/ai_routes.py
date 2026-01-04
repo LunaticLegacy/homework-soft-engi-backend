@@ -23,16 +23,12 @@ from .models.ai_llm_models import (
     TaskDecomposeResponse,
     TaskSuggestionResponse,
     ChatResponse,
-    ChatData
+    ChatData,
+    LLMContext
 )
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
-"""
-TODO:
-- 获取任务的AI建议时，必须附带工作空间信息和项目信息（其中，工作空间用于管理项目）。
-- 完成请求模型。
-"""
 
 @router.post("/decompose/", response_model=Dict[str, Any])
 async def decompose_task(
@@ -197,21 +193,18 @@ async def chat_with_ai_stream(
         if not system_prompt:
             system_prompt = load_config()["prompts"]["task_decompose"]
         
-        # 从redis获取用户ID
         user_id: str = await get_user_id_from_redis_by_token(request.token)
 
-        history_key = f"chat_history:{request.project_id},{request.user_id},{request.workspace_id}"
+        # 从数据库内获取上下文。现在这个东西仅仅是一个作用在内存系统中的东西。await service.get_context(request.workspace_id, request.project_id, user_id) or
+        history: List[LLMContext] = await service.get_context(request.workspace_id, request.project_id, user_id) or []
 
-        # 从redis里获取上下文，现在这个东西仅仅是一个作用在内存系统中的东西。
-        history: List = await redis_man.get(history_key) or []
-        
         # 准备消息历史
-        messages = []
+        messages: List[LLMContext] = []
         for item in history:
-            messages.append({"role": item["role"], "content": item["content"]})
-        
+            messages.append(LLMContext(item.role, item.content))
+            
         # 添加当前用户消息
-        messages.append({"role": "user", "content": request.message})
+        messages.append(LLMContext("user", request.message))
         
         # 调用LLM流式方法
         async def generate():
@@ -220,20 +213,24 @@ async def chat_with_ai_stream(
                 msg=request.message,
                 prev_messages=messages,
                 system_prompt=system_prompt,
-                temperature=0.725,
-                max_tokens=4096,
+                temperature=0.7,
+                max_tokens=8192,
                 output_reasoning=True
             ):
                 full_response += chunk
                 yield chunk
             
-            # 将对话历史保存到Redis
+            # 将对话历史保存到数据库内。
             nonlocal history
-            history.append({"role": "user", "content": request.message})
-            history.append({"role": "assistant", "content": full_response})
+            user_msg: LLMContext = LLMContext("user", request.message)
+            llm_msg: LLMContext = LLMContext("assistant", full_response)
+            history.append(user_msg)    
+            history.append(llm_msg)
+
             print("Now hisotries:", len(history))
 
             json_msg: Optional[str] = service._extract_json_block(full_response)
+            print(json_msg)
 
             # 如果可以出JSON，则将其解析并按照任务主表分解
             # 强化检查：确保json_msg不仅存在且去除空格后非空
@@ -252,13 +249,15 @@ async def chat_with_ai_stream(
                     except ValueError as e:
                         # 记录JSON解析错误但不中断流程
                         print(f"Warning: Failed to parse AI-generated JSON: {e}")
-            # 如果没有有效的JSON消息，则跳过任务创建步骤
-            
+            # TODO: 当内容过期时，将上下文保存在数据库内。
+
             # 只保留最近10轮对话
             if len(history) > 20:  # 10轮对话包含用户和助手的消息
                 history = history[-20:]
                 
-            await redis_man.set(history_key, history, expire=3600)  # 保存1小时
+            await service.save_context(
+                request.workspace_id, request.project_id, user_id, (history[-2], history[-1])
+            )
         
         # 返回一个处理流式内容的handler。
         return StreamingResponse(generate(), media_type="text/plain")

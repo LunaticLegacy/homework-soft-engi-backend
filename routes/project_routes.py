@@ -8,11 +8,11 @@ from dataclasses import dataclass
 # 自己写的东西喵
 from modules.databaseman import DatabaseManager
 from core.database import get_db_manager
-from services import ProjectService, WorkspaceService
+from services import ProjectService, WorkspaceService, AITaskService
 from core.exceptions import DatabaseConnectionError, DatabaseTimeoutError
 
 # 核心依赖
-from core.utils.getters import get_project_service, get_workspace_service
+from core.utils.getters import get_project_service, get_workspace_service, get_ai_service
 from core.utils.user_id_fetch import get_user_id_from_redis_by_token
 
 from routes.models.project_models import (  # 路由
@@ -21,11 +21,13 @@ from routes.models.project_models import (  # 路由
     ProjectGetRequest,
     ProjectUpdateRequest,
     ProjectDeleteRequest,
+    ProjectLLMContextRequest,
     ProjectCreateResponse,
     ProjectListResponse,
     ProjectGetResponse,
     ProjectUpdateResponse,
     ProjectDeleteResponse,
+    ProjectLLMContextResponse,
 )
 
 
@@ -138,7 +140,30 @@ async def delete_project(
         now: datetime = datetime.now(UTC)
         return {
             "status": "success", "message": "删除成功",
-             "time": str(now)
+            "time": str(now)
         }
+    except (DatabaseConnectionError, DatabaseTimeoutError) as exc:
+        raise HTTPException(status_code=503 if isinstance(exc, DatabaseConnectionError) else 408, detail=str(exc))
+
+@router.post("/{project_id}/get_context", response_model=ProjectLLMContextResponse)
+async def fetch_llm_context(
+    request: ProjectLLMContextRequest,
+    ai_svc: AITaskService = Depends(get_ai_service)
+):
+    try:
+        # 获得用户ID，并检查目标工作空间是否属于该用户。
+        user_id: str = await get_user_id_from_redis_by_token(request.token)
+        
+        msg = await ai_svc.get_context(
+            request.workspace_id,
+            request.project_id,
+            user_id
+        )
+        now: datetime = datetime.now(UTC)
+        return {
+            "contexts": msg,
+            "time": str(now)
+        }
+    
     except (DatabaseConnectionError, DatabaseTimeoutError) as exc:
         raise HTTPException(status_code=503 if isinstance(exc, DatabaseConnectionError) else 408, detail=str(exc))

@@ -4,6 +4,10 @@ from dataclasses import dataclass
 
 from .base_models import BaseRequest, BaseResponse
 
+@dataclass
+class UserProfile:
+    username: str
+    role: str
 
 @dataclass
 class UserRegisterRequest(BaseRequest):

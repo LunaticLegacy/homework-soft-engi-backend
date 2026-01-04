@@ -51,7 +51,7 @@ class Task:
     due_at: Optional[str]
     started_at: Optional[str]
     completed_at: Optional[str]
-    is_recurring: Optional[str]
+    is_recurring: Optional[str] | Optional[bool]
     recurrence_rule: Optional[str]
     recurrence_frequency: Optional[str]
     recurrence_meta: Optional[str]
