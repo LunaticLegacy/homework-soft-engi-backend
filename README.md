@@ -1,123 +1,101 @@
-## 后端工程
+<div align="center">
 
-Based on `Python 3.13.5`
+# 🚀 星之梦 任务管理助手 · 后端服务
 
-### 需求：
+[![GitHub stars](https://img.shields.io/github/stars/LunaticLegacy/homework-soft-engi-backend?style=social)](https://github.com/LunaticLegacy/homework-soft-engi-backend/stargazers)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](#-docker-部署推荐)
 
-需要导入的库：
-- `redis`：用于管理缓存
-- `asyncpg`：用于管理postgresql数据库，异步
-- `fastapi`：用于构建后端服务器及路由
+> 🧠 一个基于LLM的任务管理助手（后端）：使用LLM辅助，对任务进行分解，并管理。
 
-使用该命令：
-```
-pip install -r ./requirements.txt
-```
-以一键导入所需库。（注意：`开发之前，必须创建虚拟环境`。）
+[**功能特性**](#-功能特性) • [**快速开始**](#-快速开始) • [**部署指南**](docs/DEPLOY.md) • [**开发文档**](docs/DEVELOPMENT.md) • [**更新日志**](docs/CHANGELOG.md)
 
-### 开发规范：
+</div>
 
-请`fork`一份本仓库，并创建一个新的分支，随后签出到创建的分支。
-- 你的所有改动都必须放在这个分支上，并上传到你自己fork后的仓库。
-- 确定代码完工后，请对主仓库发起`pull request`。
-- 本代码采用模块化开发。
-    - 请在`utils`文件夹内为你的模块创建一个文件夹，并在文件夹内写入模块。
+---
 
-### 代码规范：
+## ✨ 本仓库功能特性
 
-1. 当一个变量被初次创建时，必须写类型注解。
-```python
-def blablabla() -> None:
-    a: int = 3  # 第一次定义时必须写类型注解
-    a = 4       # 后赋值可以省略
-```
+### 🎯 核心能力
 
-2. 函数的输入类型及输出类型必须写类型注解，且函数必须写说明。（我习惯用Google风的参数描述）
-```python
-def func1(a: int, b: float) -> float:
-    """
-    乘法操作。
-    Args:
-        a (int): 第一个数字。
-        b (float): 第二个数字。
-    Returns:
-        (float): 乘积。
-    """
-    return a * b
-```
+- **统一API网关**：为前端提供稳定的接口、统一错误码与返回结构
+- **鉴权与权限**：登录 / Token / 角色权限（按你的实现保留）
+- **业务模块化**：模块按目录组织，便于多人协作与扩展
+- **可观测性**：结构化日志 + 健康检查（建议上线必备）
+- **Docker 化**：本地/线上一致运行环境，降低部署成本
 
-3. 关于库`typing`，如果需要标注元组或列表，或者其他数据类型，可以从内置的`typing`库里引入标注。
-```python
-from typing import List, Tuple, Dict, Any, Optional
-# 这个库还有一堆东西，问deepseek或豆包吧
-```
-例：
-```python
-def get_user_ids() -> List[int]:
-    return [1, 2, 3]
+### 🧩 技术栈
+
+- Web Framework：FastAPI
+- Database：PostgreSQL（使用asyncpg开发）
+- Cache：Redis
+- DevOps：Docker
+
+---
+
+## 🚀 快速开始
+
+> 推荐使用本地运行——本服务一开始作为服务器专用服务准备。
+
+### 方式一：本地运行（开发推荐）
+
+#### 1) 准备环境
+
+- Python 3.10+
+- Docker
+  - PostgreSQL / Redis
+
+#### 2) 安装依赖
+
+```bash
+# 任选一种方式（按你项目实际）
+pip install -r requirements.txt
+# 或
+poetry install
 ```
 
-4. 返回多个值时使用`Dict`
-- **禁止返回裸列表或元组。**
-- 如果需要一次传出多个不同意义值，请使用`Dict`——严禁使用`List`或`Tuple`。
-```python
-# 错误示例
-def func3() -> List:
-    """
-    错误示例函数。如果直接返回一个List，那么接下来这个List被如何解析就全看调用者如何进行。
-    我曾经搞过一个传入List的结构，当时的元素将近30多个。
-    只要我增加/删除了其中一个元素，那么后来的代码工作量会极为巨大——数组下标必须被全部更改。
-    """
-    return [404, "Not found"]
+#### 3) 设置参数
 
-# 正确示例
-from typing import Any
+在`settings.py`里设置自己使用的LLM。
 
-def correct_func3() -> Dict[str, Any]:
-    """
-    如果未来会有其他位置需要使用该函数，该函数的更改导致的代码更改量就不会再那么大了。
-    因为所有的值都是有一个键所对应的。
-    """
-    return {
-        "code": 404,
-        "message": "Not found"
-    }
+#### 4) 启动前端内容
+
+> 该应用必须前后端均启动才可用。
+
+## 📁 项目结构
 
 ```
+homework-soft-engi-backend/
+├── api/                    # API接口定义
+│   └── v1/                 # V1版本API，已弃用
+├── core/                   # 核心功能模块
+├── demos/                  # 示例代码
+├── doc/                    # 文档
+├── docker/                 # 容器配置
+├── llm_prompts/            # LLM提示词
+├── modules/                # 可复用的关键模块（包含SQL、Redis和LLM）
+├── routes/                 # 路由定义
+├── services/               # 业务逻辑服务
+├── sql/                    # SQL脚本
+├── tests/                  # 测试代码
+├── app.py                  # 运行用程序
+├── requirements.txt        # 需要的包体
+└── settings.py             # 运行时设置
+```
 
-5. 命名规范：
-- 所有的类名必须为开头大写，例：`DatabaseManager`。
-- 函数名全小写，单词之间用`_`分割。例：`function_in_class`。
-- 如果需要定义类内私有函数，在函数名前加一个`_`。例：`_a_private_function`。
+## 🗺️ Roadmap
 
-### AI集成说明：
+- 统一错误提示与全局异常兜底
+- E2E / 关键链路回归（可选）
+- 多端适配清单（H5/小程序差异点文档化）
 
-本系统集成了基于大语言模型（LLM）的AI功能，包括任务分解、任务建议和AI对话。
+## 🤝 贡献
 
-1. 配置：
-   - 在`config.json`中配置LLM相关参数
-   - 需要设置正确的API URL、API密钥和模型名称
+欢迎提交 Issue / Pull Request！
 
-2. 主要功能：
-   - 任务分解：将大目标自动分解为可执行的子任务
-   - 任务建议：为特定任务提供完成建议和技巧
-   - AI对话：与AI进行自然语言对话
+开发文档：[doc/dev_documents/DEVELOPMENT.md](doc/dev_documents/DEVELOPMENT.md)
 
-3. 相关模块：
-   - `modules/llm_fetcher/`：LLM获取器模块
-   - `services/ai_task_service.py`：AI任务服务
-   - `routes/ai_routes.py`：AI相关API路由
+## 📄 License
 
-### 测试规范：
-
-1. 测试目的
-
-如何写测试用例？
-- 需要使用包体`pytest`。
-    - 使用命令`python -m pytest`以进行测试。（如果没有这个，自行解决，装个python吧）
-- 测试用例必须写在文件夹`tests`里，且文件前缀必须是`test`。
-    - 例：`test_database_manager.py`，`test_1145141919810.py`，...
-- ~~如果实在不行将代码扔给通义灵码，将其切换到“智能体”模式，提出要求就可以。~~
-
-
- 
+[MIT License](LICENSE)
