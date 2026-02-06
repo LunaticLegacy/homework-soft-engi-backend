@@ -121,7 +121,16 @@ async def update_task(
     svc: TaskService = Depends(get_task_service)
 ):
     try:
-        payload: Dict[str, Any] = {k: v for k, v in dict(request).items() if v is not None}
+        request_time: str = request.time
+        token: Optional[str] = request.token
+        payload: Dict[str, Any] = {
+            k: v for k, v in dict(request).items()
+            if v is not None and k not in ("time", "token")
+        }
+        for key in ("due_at", "started_at", "completed_at"):
+            value = payload.get(key)
+            if isinstance(value, str):
+                payload[key] = datetime.fromisoformat(value.replace("Z", "+00:00"))
         data = await svc.update_task(task_id, payload)
         if not data:
             raise HTTPException(status_code=404, detail="Task not found")

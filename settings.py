@@ -154,7 +154,7 @@ def build_settings() -> AppSettings:
         ),
         llm=LLMSettings(
             api_url=_env("LLM_API_URL", "https://api.deepseek.com"),
-            api_key=_env("LLM_API_KEY", ""),  # 重要：别再硬编码
+            api_key=_env("LLM_API_KEY", "sk-558d007981e0400b9a3db23a824e4eef"),  # 重要：别再硬编码
             model=_env("LLM_MODEL", "deepseek-reasoner"),
         ),
         prompts=PromptsSettings(
